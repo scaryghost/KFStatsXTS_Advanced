@@ -22,13 +22,25 @@ public class TSAdvancedWriter implements DataWriter {
     }
 
     public List<String> getMissingSteamInfoIDs() {
-        throw new UnsupportedException("Not implemented")
+        def missingInfo= []
+        sql.eachRow("select id from player where name is NULL or avatar is NULL") {row ->
+            missingInfo << row.id
+        }
+        return missingInfo
     }
     public void writeSteamInfo(Collection<SteamInfo> steamInfo) {
-        throw new UnsupportedException("Not implemented")
+        sql.withTransaction {
+            sql.addBatch("select upsert_player(?, ?, ?)") {ps ->
+                steamInfo.each {info ->
+                    ps.addBatch([info.steamID64, info.name, info.avatar])
+                }
+            }
+        }
     }
     public void writeSteamInfo(SteamInfo steamInfo) {
-        throw new UnsupportedException("Not implemented")
+        sql.withTransaction {
+            sql.execute("select upsert_player(?, ?, ?)", [steamInfo.steamID64, steamInfo.name, steamInfo.avatar])
+        }
     }
     public void writeMatchData(MatchPacket packet) {
         checkServerState(packet)
