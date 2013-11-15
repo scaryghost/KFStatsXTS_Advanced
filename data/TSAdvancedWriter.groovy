@@ -26,10 +26,10 @@ public class TSAdvancedWriter implements DataWriter {
     }
     public void writeSteamInfo(Collection<SteamInfo> steamInfo) {
         throw new UnsupportedException("Not implemented")
-    };
+    }
     public void writeSteamInfo(SteamInfo steamInfo) {
         throw new UnsupportedException("Not implemented")
-    };
+    }
     public void writeMatchData(MatchPacket packet) {
         checkServerState(packet)
         def key= generateKey(packet)
@@ -53,18 +53,56 @@ public class TSAdvancedWriter implements DataWriter {
                 sql.execute("update match set wave=?, result=?, timestamp=?, duration=? where id=?", [packet.getWave(), result, 
                         packetAttrs.duration, dateFormat.format(Calendar.getInstance().getTime()), packetAttrs.duration, state.uuid])
             } else {
-                packet.getStats().each {name, value ->
-                    sql.execute("""insert wave_statistic values (
-                            (select id from statistic where category_id=(select id from category where name=?) and name=?), 
-                            ?, ?, ?)""", [packet.getCategry(), name, state.uuid, packet.getWave(), value])
+                sql.execute("select insert_category(${packet.getCategory()})")
+                sql.addBatch("select insert_statistic((select id from category where name=?), ?)") {ps ->
+                    packet.getStats().each {name, value ->
+                        ps.addBatch([packet.getCategory(), name])
+                    }
+                }
+                sql.addBatch("""insert wave_statistic values (
+                        (select id from statistic where category_id=(select id from category where name=?) and name=?), 
+                        ?, ?, ?)""") {ps ->
+                    packet.getStats().each {name, value ->
+                        ps.addBatch([packet.getCategry(), name, state.uuid, packet.getWave(), value])
+                    }
                 }
             }
         }
         state.maxWaveSeen= [state.maxWaveSeen, packet.getWave()].max()
-    };
+    }
     public void writePlayerData(PlayerContent content) {
-        throw new UnsupportedException("Not implemented")
-    };
+        checkServerState(packet)
+        def key= generateKey(packet)
+        def state= matchState[key]
+        def info= content.getMatchInfo()
+        
+        sql.withTransaction {
+            sql.execute("""insert into player_session (player_id, match_id, wave, timestamp, duration, disconnected, finale_played, finale_survived) 
+                    values (?, ?, ?, ?, ?, ?, ?, ?)""", [content.getSteamID64(), state.uuid, info.wave, dateFormat.format(Calendar.getInstance().getTime()), 
+                    info.duration, info.result == Result.DISCONNECT, info.finalWave == 1, info.finalWaveSurvived == 1])
+            sql.addBatch("select insert_category(?)") {ps ->
+                content.getPackets().each {packet ->
+                    ps.addBatch([packet.getCategory()])
+                }
+            }
+            sql.addBatch("select insert_statistic((select id from category where name=?), ?)") {ps ->
+                content.getPackets().each {packet ->
+                    packet.getStats().each {name, value ->
+                        ps.addBatch([packet.getCategory(), name])
+                    }
+                }
+            }
+            sql.addBatch("""insert into player_statistic values (
+                    (select id from statistic where category_id=(select id from category where name=?) and name=?),
+                    (select id from player_session where player_id=? and match_id=?), ?)""") {ps ->
+                content.getPackets().each {packet ->
+                    packet.getStats().each {name, value ->
+                        ps->addBatch([packet.getCategory(), name, content.getSteamID64(), state.uuid, value])
+                    }
+                }
+            }
+        }
+    }
 
     private def generateKey(StatPacket packet) {
         return "${packet.getSenderAddress()}:${packet.getSenderPort()}"
