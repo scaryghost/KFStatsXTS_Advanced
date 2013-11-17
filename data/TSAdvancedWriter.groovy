@@ -1,11 +1,17 @@
 package com.github.etsai.kfstatsxtsadvanced
 
 import com.github.etsai.kfsxtrackingserver.DataWriter
+import com.github.etsai.kfsxtrackingserver.DataWriter.SteamInfo
+import com.github.etsai.kfsxtrackingserver.PacketParser.StatPacket
+import com.github.etsai.kfsxtrackingserver.PacketParser.MatchPacket
+import com.github.etsai.kfsxtrackingserver.PacketParser.PlayerPacket
+import com.github.etsai.kfsxtrackingserver.PacketParser.Result
 import com.github.etsai.kfsxtrackingserver.PlayerContent
-import com.github.etsai.kfsxtrackingserver.PacketParser.*
 import groovy.sql.Sql
 import java.sql.Connection
+import java.sql.BatchUpdateException
 import java.text.SimpleDateFormat
+import java.util.TimeZone
 import java.util.UUID;
 
 public class TSAdvancedWriter implements DataWriter {
@@ -15,10 +21,11 @@ public class TSAdvancedWriter implements DataWriter {
 
     private final def sql, matchState, dateFormat
 
-    public SQLiteWriter(Connection conn) {
+    public TSAdvancedWriter(Connection conn) {
         this.sql= new Sql(conn)
         matchState= [:]
         dateFormat= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z")
+        dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"))
     }
 
     public List<String> getMissingSteamInfoIDs() {
@@ -30,9 +37,8 @@ public class TSAdvancedWriter implements DataWriter {
     }
     public void writeSteamInfo(Collection<SteamInfo> steamInfo) {
         sql.withTransaction {
-            sql.addBatch("select upsert_player(?, ?, ?)") {ps ->
-                steamInfo.each {info ->
-                    ps.addBatch([info.steamID64, info.name, info.avatar])
+            steamInfo.each {info ->
+                sql.call("{call upsert_player(?, ?, ?)}", [info.steamID64, info.name, info.avatar]) {
                 }
             }
         }
@@ -47,35 +53,34 @@ public class TSAdvancedWriter implements DataWriter {
         def key= generateKey(packet)
         def state= matchState[key]
 
-        if (packet.getWave() < maxWaveSeen) {
+        if (packet.getWave() < state.maxWaveSeen) {
             matchState.remove(key)
             checkServerState(packet)
+            state= matchState[key]
         }
         sql.withTransaction {
             if (state.maxWaveSeen == 0) {
                 sql.execute("select insert_setting(?, ?)", [packet.getDifficulty(), packet.getLength()])
                 sql.execute("select insert_level(?)", [packet.getLevel()])
                 sql.execute("""insert into match values (?, (select id from setting where difficulty=? and length=?)
-                        , (select id from level where name=?))""", [state.uuid, packet.getDifficulty(), packet.getLength()])
+                        , (select id from level where name=?))""", [state.uuid, packet.getDifficulty(), packet.getLength(), packet.getLevel()])
             }
             if (packet.getCategory() == "result") {
-                def packetAttrs= packet.getAttrs()
+                def packetAttrs= packet.getAttributes()
                 def result= packetAttrs.result == Result.WIN ? 1 : -1
                 state.receivedResult= true
-                sql.execute("update match set wave=?, result=?, timestamp=?, duration=? where id=?", [packet.getWave(), result, 
-                        packetAttrs.duration, dateFormat.format(Calendar.getInstance().getTime()), packetAttrs.duration, state.uuid])
+                sql.execute("update match set wave=?, result=?, timestamp=?::timestamp, duration=? where id=?", [packet.getWave(), result, 
+                        dateFormat.format(Calendar.getInstance().getTime()), packetAttrs.duration, state.uuid])
             } else {
-                sql.execute("select insert_category(${packet.getCategory()})")
-                sql.addBatch("select insert_statistic((select id from category where name=?), ?)") {ps ->
-                    packet.getStats().each {name, value ->
-                        ps.addBatch([packet.getCategory(), name])
+                packet.getStats().each {name, value ->
+                    sql.call("{call insert_statistic(?, ?)}", [packet.getCategory(), name]) {
                     }
                 }
-                sql.addBatch("""insert wave_statistic values (
+                sql.withBatch("""insert into wave_statistic (statistic_id, match_id, wave, value) values (
                         (select id from statistic where category_id=(select id from category where name=?) and name=?), 
                         ?, ?, ?)""") {ps ->
                     packet.getStats().each {name, value ->
-                        ps.addBatch([packet.getCategry(), name, state.uuid, packet.getWave(), value])
+                        ps.addBatch([packet.getCategory(), name, state.uuid, packet.getWave(), value])
                     }
                 }
             }
@@ -83,46 +88,49 @@ public class TSAdvancedWriter implements DataWriter {
         state.maxWaveSeen= [state.maxWaveSeen, packet.getWave()].max()
     }
     public void writePlayerData(PlayerContent content) {
-        checkServerState(packet)
-        def key= generateKey(packet)
+        checkServerState(content.getSenderAddress(), content.getSenderPort())
+        def key= generateKey(content.getSenderAddress(), content.getSenderPort())
         def state= matchState[key]
         def info= content.getMatchInfo()
         
         sql.withTransaction {
             sql.execute("""insert into player_session (player_id, match_id, wave, timestamp, duration, disconnected, finale_played, finale_survived) 
-                    values (?, ?, ?, ?, ?, ?, ?, ?)""", [content.getSteamID64(), state.uuid, info.wave, dateFormat.format(Calendar.getInstance().getTime()), 
+                    values (?, ?, ?, ?::timestamp, ?, ?, ?, ?)""", 
+                    [content.getSteamID64(), state.uuid, info.wave, dateFormat.format(Calendar.getInstance().getTime()), 
                     info.duration, info.result == Result.DISCONNECT, info.finalWave == 1, info.finalWaveSurvived == 1])
-            sql.addBatch("select insert_category(?)") {ps ->
-                content.getPackets().each {packet ->
-                    ps.addBatch([packet.getCategory()])
-                }
-            }
-            sql.addBatch("select insert_statistic((select id from category where name=?), ?)") {ps ->
-                content.getPackets().each {packet ->
-                    packet.getStats().each {name, value ->
-                        ps.addBatch([packet.getCategory(), name])
+
+            content.getPackets().each {packet ->
+                packet.getStats().keySet().each {name ->
+                    sql.call("{call insert_statistic(?, ?)}", [packet.getCategory(), name]) {
                     }
                 }
             }
-            sql.addBatch("""insert into player_statistic values (
+                
+            sql.withBatch("""insert into player_statistic (statistic_id, player_session_id, value) values (
                     (select id from statistic where category_id=(select id from category where name=?) and name=?),
                     (select id from player_session where player_id=? and match_id=?), ?)""") {ps ->
                 content.getPackets().each {packet ->
                     packet.getStats().each {name, value ->
-                        ps->addBatch([packet.getCategory(), name, content.getSteamID64(), state.uuid, value])
+                        ps.addBatch([packet.getCategory(), name, content.getSteamID64(), state.uuid, value])
                     }
                 }
             }
         }
     }
 
-    private def generateKey(StatPacket packet) {
-        return "${packet.getSenderAddress()}:${packet.getSenderPort()}"
+    private String generateKey(String address, int port) {
+        return "$address:$port"
+    }
+    private String generateKey(StatPacket packet) {
+        return generateKey(packet.getSenderAddress(), packet.getSenderPort())
     }
 
     private void checkServerState(StatPacket packet) {
-        def addressPort= generateKey(packet)
-        if (!matchState.containsKey(addressPort)) {
+        checkServerState(packet.getSenderAddress(), packet.getSenderPort())
+    }
+    private void checkServerState(String address, int port) {
+        def addressPort= generateKey(address, port)
+        if (matchState[addressPort] == null) {
             matchState[addressPort]= new MatchState(uuid: UUID.randomUUID(), maxWaveSeen: 0, receivedResult: false)
         }
     }
