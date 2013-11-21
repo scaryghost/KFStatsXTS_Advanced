@@ -38,14 +38,13 @@ public class TSAdvancedWriter implements DataWriter {
     public void writeSteamInfo(Collection<SteamInfo> steamInfo) {
         sql.withTransaction {
             steamInfo.each {info ->
-                sql.call("{call upsert_player(?, ?, ?)}", [info.steamID64, info.name, info.avatar]) {
-                }
+                sql.call("{call upsert_player(?, ?, ?)}", [info.steamID64, info.name, info.avatar])
             }
         }
     }
     public void writeSteamInfo(SteamInfo steamInfo) {
         sql.withTransaction {
-            sql.execute("select upsert_player(?, ?, ?)", [steamInfo.steamID64, steamInfo.name, steamInfo.avatar])
+            sql.call("{call upsert_player(?, ?, ?)}", [steamInfo.steamID64, steamInfo.name, steamInfo.avatar])
         }
     }
     public void writeMatchData(MatchPacket packet) {
@@ -60,8 +59,8 @@ public class TSAdvancedWriter implements DataWriter {
         }
         sql.withTransaction {
             if (state.maxWaveSeen == 0) {
-                sql.execute("select insert_setting(?, ?)", [packet.getDifficulty(), packet.getLength()])
-                sql.execute("select insert_level(?)", [packet.getLevel()])
+                sql.call("{call insert_setting(?, ?)}", [packet.getDifficulty(), packet.getLength()])
+                sql.call("{call insert_level(?)}", [packet.getLevel()])
                 sql.execute("""insert into match values (?, (select id from setting where difficulty=? and length=?)
                         , (select id from level where name=?))""", [state.uuid, packet.getDifficulty(), packet.getLength(), packet.getLevel()])
             }
@@ -73,8 +72,7 @@ public class TSAdvancedWriter implements DataWriter {
                         dateFormat.format(Calendar.getInstance().getTime()), packetAttrs.duration, state.uuid])
             } else {
                 packet.getStats().each {name, value ->
-                    sql.call("{call insert_statistic(?, ?)}", [packet.getCategory(), name]) {
-                    }
+                    sql.call("{call insert_statistic(?, ?)}", [packet.getCategory(), name])
                 }
                 sql.withBatch("""insert into wave_statistic (statistic_id, match_id, wave, value) values (
                         (select id from statistic where category_id=(select id from category where name=?) and name=?), 
@@ -101,8 +99,7 @@ public class TSAdvancedWriter implements DataWriter {
 
             content.getPackets().each {packet ->
                 packet.getStats().keySet().each {name ->
-                    sql.call("{call insert_statistic(?, ?)}", [packet.getCategory(), name]) {
-                    }
+                    sql.call("{call insert_statistic(?, ?)}", [packet.getCategory(), name])
                 }
             }
                 
