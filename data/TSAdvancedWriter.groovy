@@ -17,13 +17,12 @@ public abstract class TSAdvancedWriter implements DataWriter {
         public def uuid, maxWaveSeen, receivedResult
     }
 
-    private final def matchState, dateFormat
-    protected final def sql
+    protected final def matchState, dateFormat, sql
 
     public TSAdvancedWriter(Connection conn) {
         this.sql= new Sql(conn)
         matchState= [:]
-        dateFormat= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z")
+        dateFormat= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"))
     }
 
