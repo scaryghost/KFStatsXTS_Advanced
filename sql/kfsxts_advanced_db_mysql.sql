@@ -61,8 +61,8 @@ CREATE TABLE `match` (
   id         varchar(36) NOT NULL comment 'Unique id for the match', 
   setting_id smallint(5) NOT NULL comment 'Id of the match''s game settings', 
   level_id   int(10) NOT NULL comment 'Id of the level that was played', 
-  wave       smallint(6) DEFAULT 0 comment 'Wave reached', 
-  result     smallint(6) DEFAULT 0 comment 'Result of the match: 1=win, -1=loss', 
+  wave       smallint(6) comment 'Wave reached', 
+  result     smallint(6) comment 'Result of the match: 1=win, -1=loss', 
   timestamp  timestamp NULL comment 'Date and time the match ended', 
   duration   int(11) comment 'How long the match lasted', 
   PRIMARY KEY (id)) comment='Contains data on each match that was played';
@@ -87,7 +87,7 @@ CREATE TABLE wave_statistic (
   statistic_id smallint(16) NOT NULL comment 'Id of the statistic', 
   match_id     varchar(36) NOT NULL comment 'Id of the match this statistic corresponds to', 
   wave         smallint(5) NOT NULL comment 'Wave the data corresponds to', 
-  value        mediumint(24) NOT NULL comment 'Value of the data');
+  value        mediumint(24) NOT NULL comment 'Value of the data') comment='Statistics that are grouped on a wave by wave basis';
 CREATE TABLE player_statistic (
   statistic_id      smallint(16) NOT NULL comment 'Id of the statistic', 
   player_session_id int(32) NOT NULL comment 'Player''s session id the statistic is for', 
@@ -100,7 +100,7 @@ CREATE TABLE statistic (
   id          smallint(16) NOT NULL AUTO_INCREMENT, 
   category_id smallint(5) NOT NULL comment 'Id of the category the statistic belongs to', 
   name        varchar(32) NOT NULL comment 'Name of the statistic', 
-  PRIMARY KEY (id));
+  PRIMARY KEY (id)) comment='Statistics that are tracked by the database';
 ALTER TABLE `match` ADD INDEX FKmatch682879 (setting_id), ADD CONSTRAINT FKmatch682879 FOREIGN KEY (setting_id) REFERENCES setting (id);
 ALTER TABLE `match` ADD INDEX FKmatch90667 (level_id), ADD CONSTRAINT FKmatch90667 FOREIGN KEY (level_id) REFERENCES level (id);
 ALTER TABLE player_session ADD INDEX FKplayer_ses609271 (player_id), ADD CONSTRAINT FKplayer_ses609271 FOREIGN KEY (player_id) REFERENCES player (id);

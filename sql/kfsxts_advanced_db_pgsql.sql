@@ -52,8 +52,8 @@ CREATE TABLE match (
   id         uuid NOT NULL, 
   setting_id int2 NOT NULL, 
   level_id   int4 NOT NULL, 
-  wave       int2 DEFAULT 0, 
-  result     int2 DEFAULT 0, 
+  wave       int2, 
+  result     int2, 
   timestamp  timestamp, 
   duration   int4, 
   PRIMARY KEY (id));
@@ -100,6 +100,7 @@ CREATE TABLE wave_statistic (
   match_id     uuid NOT NULL, 
   wave         int2 NOT NULL, 
   value        int4 NOT NULL);
+COMMENT ON TABLE wave_statistic IS 'Statistics that are grouped on a wave by wave basis';
 COMMENT ON COLUMN wave_statistic.statistic_id IS 'Id of the statistic';
 COMMENT ON COLUMN wave_statistic.match_id IS 'Id of the match this statistic corresponds to';
 COMMENT ON COLUMN wave_statistic.wave IS 'Wave the data corresponds to';
@@ -124,6 +125,7 @@ CREATE TABLE statistic (
   category_id int2 NOT NULL, 
   name        varchar(32) NOT NULL, 
   PRIMARY KEY (id));
+COMMENT ON TABLE statistic IS 'Statistics that are tracked by the database';
 COMMENT ON COLUMN statistic.category_id IS 'Id of the category the statistic belongs to';
 COMMENT ON COLUMN statistic.name IS 'Name of the statistic';
 ALTER TABLE match ADD CONSTRAINT FKmatch682879 FOREIGN KEY (setting_id) REFERENCES setting (id);
