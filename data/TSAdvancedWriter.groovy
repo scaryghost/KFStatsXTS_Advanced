@@ -79,14 +79,18 @@ public abstract class TSAdvancedWriter implements DataWriter {
         checkServerState(content.getServerAddressPort())
         def key= content.getServerAddressPort()
         def state= matchState[key]
+        def matchInfo= content.getMatchInfo()
         
-        if (content.getMatchInfo().wave < state.maxWaveSeen) {
+        if (matchInfo.wave < state.maxWaveSeen) {
             matchState.remove(key)
             checkServerState(packet.getServerAddressPort())
             state= matchState[key]
         }
         sql.withTransaction {
-            insertPlayerSession(content.getSteamID64(), content.getMatchInfo(), state.uuid, dateFormat.format(Calendar.getInstance().getTime()))
+            insertSetting(matchInfo.difficulty, matchInfo.length)
+            insertLevel(matchInfo.level)
+            insertMatch(state.uuid, matchInfo.difficulty, matchInfo.length, matchInfo.level)
+            insertPlayerSession(content.getSteamID64(), matchInfo, state.uuid, dateFormat.format(Calendar.getInstance().getTime()))
             content.getPackets().each {packet ->
                 packet.getStats().keySet().each {name ->
                     insertStatistic(packet.getCategory(), name)
@@ -94,7 +98,7 @@ public abstract class TSAdvancedWriter implements DataWriter {
             }
             insertPlayerStatistic(content.getPackets(), content.getSteamID64(), state.uuid)
         }
-        state.maxWaveSeen= [state.maxWaveSeen, content.getMatchInfo().wave].max()
+        state.maxWaveSeen= [state.maxWaveSeen, matchInfo.wave].max()
     }
 
     private void checkServerState(String addressPort) {
