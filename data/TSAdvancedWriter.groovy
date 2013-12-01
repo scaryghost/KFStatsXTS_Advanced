@@ -46,13 +46,13 @@ public abstract class TSAdvancedWriter implements DataWriter {
         }
     }
     public void writeMatchData(MatchPacket packet) {
-        checkServerState(packet)
-        def key= generateKey(packet)
+        checkServerState(packet.getServerAddressPort())
+        def key= packet.getServerAddressPort()
         def state= matchState[key]
 
         if (packet.getWave() < state.maxWaveSeen) {
             matchState.remove(key)
-            checkServerState(packet)
+            checkServerState(packet.getServerAddressPort())
             state= matchState[key]
         }
         sql.withTransaction {
@@ -76,10 +76,15 @@ public abstract class TSAdvancedWriter implements DataWriter {
         state.maxWaveSeen= [state.maxWaveSeen, packet.getWave()].max()
     }
     public void writePlayerData(PlayerContent content) {
-        checkServerState(content.getSenderAddress(), content.getSenderPort())
-        def key= generateKey(content.getSenderAddress(), content.getSenderPort())
+        checkServerState(content.getServerAddressPort())
+        def key= content.getServerAddressPort()
         def state= matchState[key]
         
+        if (content.getMatchInfo().wave < state.maxWaveSeen) {
+            matchState.remove(key)
+            checkServerState(packet.getServerAddressPort())
+            state= matchState[key]
+        }
         sql.withTransaction {
             insertPlayerSession(content.getSteamID64(), content.getMatchInfo(), state.uuid, dateFormat.format(Calendar.getInstance().getTime()))
             content.getPackets().each {packet ->
@@ -89,20 +94,10 @@ public abstract class TSAdvancedWriter implements DataWriter {
             }
             insertPlayerStatistic(content.getPackets(), content.getSteamID64(), state.uuid)
         }
+        state.maxWaveSeen= [state.maxWaveSeen, content.getMatchInfo().wave].max()
     }
 
-    private String generateKey(String address, int port) {
-        return "$address:$port"
-    }
-    private String generateKey(StatPacket packet) {
-        return generateKey(packet.getSenderAddress(), packet.getSenderPort())
-    }
-
-    private void checkServerState(StatPacket packet) {
-        checkServerState(packet.getSenderAddress(), packet.getSenderPort())
-    }
-    private void checkServerState(String address, int port) {
-        def addressPort= generateKey(address, port)
+    private void checkServerState(String addressPort) {
         if (matchState[addressPort] == null) {
             matchState[addressPort]= new MatchState(uuid: UUID.randomUUID(), maxWaveSeen: 0, receivedResult: false)
         }
