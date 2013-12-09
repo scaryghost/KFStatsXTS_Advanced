@@ -42,38 +42,34 @@ public abstract class TSAdvancedWriter implements DataWriter {
         }
     }
     public void writeMatchData(MatchPacket packet) {
-        checkServerState(packet.getServerAddressPort())
-        def key= packet.getServerAddressPort(), uuid
+        def uuid
 
         sql.withTransaction {
             if (packet.getCategory() == "info") {
                 def attrs= packet.getAttributes()
 
                 uuid= UUID.randomUUID()
-                matchUUIDs[key]= uuid
-                insertSetting(attrs[MatchPacket.ATTR_DIFFICULTY], attrs[MatchPacket.ATTR_DIFFICULTY])
+                matchUUIDs[packet.getServerAddressPort()]= uuid
+                insertSetting(attrs[MatchPacket.ATTR_DIFFICULTY], attrs[MatchPacket.ATTR_LENGTH])
                 insertLevel(attrs[MatchPacket.ATTR_MAP])
                 insertMatch(uuid, attrs[MatchPacket.ATTR_DIFFICULTY], attrs[MatchPacket.ATTR_LENGTH], attrs[MatchPacket.ATTR_MAP])
             } else {
-                uuid= matchUUIDs[key]
-            }
-
-            if (packet.getCategory() == "result") {
-                def packetAttrs= packet.getAttributes()
-                def result= packetAttrs.result == Result.WIN ? 1 : -1
-                updateMatch(packet.getWave(), result, dateFormat.format(Calendar.getInstance().getTime()), packetAttrs.duration, uuid)
-            } else {
-                packet.getStats().each {name, value ->
-                    insertStatistic(packet.getCategory(), name)
+                uuid= matchUUIDs[packet.getServerAddressPort()]
+                if (packet.getCategory() == "result") {
+                    def packetAttrs= packet.getAttributes()
+                    def result= packetAttrs.result == Result.WIN ? 1 : -1
+                    updateMatch(packet.getWave(), result, dateFormat.format(Calendar.getInstance().getTime()), packetAttrs.duration, uuid)
+                } else {
+                    packet.getStats().each {name, value ->
+                        insertStatistic(packet.getCategory(), name)
+                    }
+                    insertWaveStatistic(packet.getCategory(), packet.getStats(), packet.getWave(), uuid)
                 }
-                insertWaveStatistic(packet.getCategory(), packet.getStats(), packet.getWave(), uuid)
             }
         }
     }
     public void writePlayerData(PlayerContent content) {
-        checkServerState(content.getServerAddressPort())
-        def key= content.getServerAddressPort()
-        def uuid= matchUUIDs[key]
+        def uuid= matchUUIDs[content.getServerAddressPort()]
         def matchInfo= content.getMatchInfo()
         
         sql.withTransaction {
