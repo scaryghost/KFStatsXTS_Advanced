@@ -13,15 +13,11 @@ import java.util.TimeZone
 import java.util.UUID;
 
 public abstract class TSAdvancedWriter implements DataWriter {
-    protected static class MatchState {
-        public def uuid, maxWaveSeen, receivedResult
-    }
-
-    protected final def matchState, dateFormat, sql
+    protected final def matchUUIDs, dateFormat, sql
 
     public TSAdvancedWriter(Connection conn) {
         this.sql= new Sql(conn)
-        matchState= [:]
+        matchUUIDs= [:]
         dateFormat= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"))
     }
@@ -47,63 +43,47 @@ public abstract class TSAdvancedWriter implements DataWriter {
     }
     public void writeMatchData(MatchPacket packet) {
         checkServerState(packet.getServerAddressPort())
-        def key= packet.getServerAddressPort()
-        def state= matchState[key]
+        def key= packet.getServerAddressPort(), uuid
 
-        if (packet.getWave() < state.maxWaveSeen) {
-            matchState.remove(key)
-            checkServerState(packet.getServerAddressPort())
-            state= matchState[key]
-        }
         sql.withTransaction {
-            if (state.maxWaveSeen == 0) {
-                insertSetting(packet.getDifficulty(), packet.getLength())
-                insertLevel(packet.getLevel())
-                insertMatch(state.uuid, packet.getDifficulty(), packet.getLength(), packet.getLevel())
+            if (packet.getCategory() == "info") {
+                def attrs= packet.getAttributes()
+
+                uuid= UUID.randomUUID()
+                matchUUIDs[key]= uuid
+                insertSetting(attrs[MatchPacket.ATTR_DIFFICULTY], attrs[MatchPacket.ATTR_DIFFICULTY])
+                insertLevel(attrs[MatchPacket.ATTR_MAP])
+                insertMatch(uuid, attrs[MatchPacket.ATTR_DIFFICULTY], attrs[MatchPacket.ATTR_LENGTH], attrs[MatchPacket.ATTR_MAP])
+            } else {
+                uuid= matchUUIDs[key]
             }
+
             if (packet.getCategory() == "result") {
                 def packetAttrs= packet.getAttributes()
                 def result= packetAttrs.result == Result.WIN ? 1 : -1
-                state.receivedResult= true
-                updateMatch(packet.getWave(), result, dateFormat.format(Calendar.getInstance().getTime()), packetAttrs.duration, state.uuid)
+                updateMatch(packet.getWave(), result, dateFormat.format(Calendar.getInstance().getTime()), packetAttrs.duration, uuid)
             } else {
                 packet.getStats().each {name, value ->
                     insertStatistic(packet.getCategory(), name)
                 }
-                insertWaveStatistic(packet.getCategory(), packet.getStats(), packet.getWave(), state.uuid)
+                insertWaveStatistic(packet.getCategory(), packet.getStats(), packet.getWave(), uuid)
             }
         }
-        state.maxWaveSeen= [state.maxWaveSeen, packet.getWave()].max()
     }
     public void writePlayerData(PlayerContent content) {
         checkServerState(content.getServerAddressPort())
         def key= content.getServerAddressPort()
-        def state= matchState[key]
+        def uuid= matchUUIDs[key]
         def matchInfo= content.getMatchInfo()
         
-        if (matchInfo.wave < state.maxWaveSeen) {
-            matchState.remove(key)
-            checkServerState(packet.getServerAddressPort())
-            state= matchState[key]
-        }
         sql.withTransaction {
-            insertSetting(matchInfo.difficulty, matchInfo.length)
-            insertLevel(matchInfo.level)
-            insertMatch(state.uuid, matchInfo.difficulty, matchInfo.length, matchInfo.level)
-            insertPlayerSession(content.getSteamID64(), matchInfo, state.uuid, dateFormat.format(Calendar.getInstance().getTime()))
+            insertPlayerSession(content.getSteamID64(), matchInfo, uuid, dateFormat.format(Calendar.getInstance().getTime()))
             content.getPackets().each {packet ->
                 packet.getStats().keySet().each {name ->
                     insertStatistic(packet.getCategory(), name)
                 }
             }
-            insertPlayerStatistic(content.getPackets(), content.getSteamID64(), state.uuid)
-        }
-        state.maxWaveSeen= [state.maxWaveSeen, matchInfo.wave].max()
-    }
-
-    private void checkServerState(String addressPort) {
-        if (matchState[addressPort] == null) {
-            matchState[addressPort]= new MatchState(uuid: UUID.randomUUID(), maxWaveSeen: 0, receivedResult: false)
+            insertPlayerStatistic(content.getPackets(), content.getSteamID64(), uuid)
         }
     }
 
