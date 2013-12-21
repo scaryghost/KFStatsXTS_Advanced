@@ -13,11 +13,15 @@ import java.util.TimeZone
 import java.util.UUID;
 
 public abstract class TSAdvancedWriter implements DataWriter {
-    protected final def matchUUIDs, dateFormat, sql
+    protected final def matchStates, dateFormat, sql
+
+    protected static class State {
+        public def uuid, difficulty, length, map, address, port, createdMatchEntry
+    }
 
     public TSAdvancedWriter(Connection conn) {
         this.sql= new Sql(conn)
-        matchUUIDs= [:]
+        matchStates= [:]
         dateFormat= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"))
     }
@@ -42,34 +46,54 @@ public abstract class TSAdvancedWriter implements DataWriter {
         }
     }
     public void writeMatchData(MatchPacket packet) {
-        def uuid
+        def state= matchStates[packet.getServerAddressPort()]
 
         sql.withTransaction {
-            if (packet.getCategory() == "info") {
-                def attrs= packet.getAttributes()
-
-                uuid= UUID.randomUUID()
-                matchUUIDs[packet.getServerAddressPort()]= uuid
-                insertSetting(attrs[MatchPacket.ATTR_DIFFICULTY], attrs[MatchPacket.ATTR_LENGTH])
-                insertLevel(attrs[MatchPacket.ATTR_MAP])
-                insertMatch(uuid, attrs[MatchPacket.ATTR_DIFFICULTY], attrs[MatchPacket.ATTR_LENGTH], attrs[MatchPacket.ATTR_MAP])
-            } else {
-                uuid= matchUUIDs[packet.getServerAddressPort()]
-                if (packet.getCategory() == "result") {
+            switch (packet.getCategory()) {
+                case "info":
+                    def values= packet.getAttributes() + [uuid: UUID.randomUUID(), address: packet.getServerAddress(), 
+                            port: packet.getServerPort(), createdMatchEntry: false]
+                    matchStates[packet.getServerAddressPort()]= new State(values) 
+                    break
+                case "result":
                     def packetAttrs= packet.getAttributes()
                     def result= packetAttrs.result == Result.WIN ? 1 : -1
-                    updateMatch(packet.getWave(), result, dateFormat.format(Calendar.getInstance().getTime()), packetAttrs.duration, uuid)
-                } else {
-                    packet.getStats().each {name, value ->
-                        insertStatistic(packet.getCategory(), name)
+
+                    updateMatch(packet.getWave(), result, dateFormat.format(Calendar.getInstance().getTime()), 
+                            packetAttrs.duration, state.uuid)
+                    break
+                case "wave":
+                    def attrs= packet.getAttributes()
+                    switch(attrs.type) {
+                        case "summary":
+                            if (!state.createdMatchEntry) {
+                                insertMatch(state.uuid, state.difficulty, state.length, state.map, state.address, state.port)
+                                state.createdMatchEntry= true
+                            }
+                            upsertWaveSummary(state.uuid, packet.getWave(), attrs.completed, attrs.duration)
+                            break
+                        default:
+                            if (!state.createdMatchEntry) {
+                                insertMatch(state.uuid, state.difficulty, state.length, state.map, state.address, state.port)
+                                state.createdMatchEntry= true
+                            }
+                            insertWaveSummary(state.uuid, packet.getWave())
+                            sql.withBatch("""insert into wave_statistic (wave_summary_id, statistic_id, perk_id, value) values (
+                                    (select id from wave_summary where match_id=? and wave=?),
+                                    (select id from statistic where category_id=(select id from category where name=?) and name=?), 
+                                    (select id from statistic where category_id=(select id from category where name='perks') and name=?), ?)""") {ps ->
+                                packet.getStats().each {name, value ->
+                                    ps.addBatch([state.uuid, packet.getWave(), packet.getCategory(), name, attrs.perk, value])
+                                }
+                            }
+                            break
                     }
-                    insertWaveStatistic(packet.getCategory(), packet.getStats(), packet.getWave(), uuid)
-                }
+                    break
             }
         }
     }
     public void writePlayerData(PlayerContent content) {
-        def uuid= matchUUIDs[content.getServerAddressPort()]
+        def uuid= matchStates[content.getServerAddressPort()]
         def matchInfo= content.getMatchInfo()
         
         sql.withTransaction {
@@ -83,12 +107,11 @@ public abstract class TSAdvancedWriter implements DataWriter {
         }
     }
 
-    protected abstract void insertSetting(difficulty, length)
-    protected abstract void insertLevel(level)
-    protected abstract void insertMatch(uuid, difficulty, length, level)
+    protected abstract void insertWaveSummary(uuid, wave)
+    protected abstract void upsertWaveSummary(uuid, wave, completed, duration)
+    protected abstract void insertMatch(uuid, difficulty, length, map, address, port)
     protected abstract void updateMatch(wave, result, time, duration, uuid)
     protected abstract void insertStatistic(category, name)
-    protected abstract void insertWaveStatistic(category, stats, wave, uuid)
     protected abstract void insertPlayerSession(steamid64, info, uuid, time)
     protected abstract void insertPlayerStatistic(packets, steamid64, uuid)
 }

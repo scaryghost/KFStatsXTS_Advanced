@@ -6,15 +6,15 @@ public class PostgreSQLWriter extends TSAdvancedWriter {
         super(conn)
     }
 
-    protected void insertSetting(difficulty, length) {
-        sql.call("{call insert_setting(?, ?)}", [difficulty, length])
+    protected void insertWaveSummary(uuid, wave) {
+        sql.call("{call insert_wave_summary(?, ?::int2)}", [uuid, wave])
     }
-    protected void insertLevel(level) {
-        sql.call("{call insert_level(?)}", [level])
+    protected void upsertWaveSummary(uuid, wave, completed, duration) {
+        sql.call("{call upsert_wave_summary(?, ?::int2, ?, ?)}", [uuid, wave, completed, duration])
     }
-    protected void insertMatch(uuid, difficulty, length, level) {
-        sql.execute("""insert into match values (?, (select id from setting where difficulty=? and length=?)
-            , (select id from level where name=?))""", [uuid, difficulty, length, level])
+    protected void insertMatch(uuid, difficulty, length, map, address, port) {
+        System.err.println([uuid, difficulty, length, map, address, port])
+        sql.call("{call insert_match(?, ?, ?, ?, ?, ?::int2)}", [uuid, difficulty, length, map, address, port])
     }
     protected void updateMatch(wave, result, time, duration, uuid) {
         sql.execute("update match set wave=?, result=?, timestamp=?::timestamp, duration=? where id=?", 
@@ -22,14 +22,6 @@ public class PostgreSQLWriter extends TSAdvancedWriter {
     }
     protected void insertStatistic(category, name) {
         sql.call("{call insert_statistic(?, ?)}", [category, name])
-    }
-    protected void insertWaveStatistic(category, stats, wave, uuid) {
-        sql.withBatch("""insert into wave_statistic (statistic_id, match_id, wave, value) values (
-                (select id from statistic where category_id=(select id from category where name=?) and name=?), ?, ?, ?)""") {ps ->
-            stats.each {name, value ->
-                ps.addBatch([category, name, uuid, wave, value])
-            }
-        }
     }
     protected void insertPlayerSession(steamid64, info, uuid, time) {
         sql.execute("""insert into player_session (player_id, match_id, wave, timestamp, duration, disconnected, finale_played, finale_survived) 
