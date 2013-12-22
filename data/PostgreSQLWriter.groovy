@@ -1,4 +1,3 @@
-import com.github.etsai.kfsxtrackingserver.PacketParser.Result
 import java.sql.Connection
 
 public class PostgreSQLWriter extends TSAdvancedWriter {
@@ -26,7 +25,7 @@ public class PostgreSQLWriter extends TSAdvancedWriter {
     protected void insertPlayerSession(steamid64, info, uuid, time) {
         sql.execute("""insert into player_session (player_id, match_id, wave, timestamp, duration, disconnected, finale_played, finale_survived) 
             values (?, ?, ?, ?::timestamp, ?, ?, ?, ?)""", 
-            [steamid64,uuid, info.wave, time, info.duration, info.result == Result.DISCONNECT, 
+            [steamid64,uuid, info.wave, time, info.duration, info.disconnected, 
             info.finalWave == 1, info.finalWaveSurvived == 1])
     }
     protected void insertPlayerStatistic(packets, steamid64, uuid) {

@@ -3,11 +3,6 @@ DROP FUNCTION IF EXISTS insert_statistic(varchar,varchar);
 DROP FUNCTION IF EXISTS insert_match(uuid,varchar,varchar,varchar,varchar,int2);
 DROP FUNCTION IF EXISTS insert_wave_summary(uuid,int2);
 DROP FUNCTION IF EXISTS upsert_wave_summary(uuid,int2,bool,int4);
-DROP FUNCTION IF EXISTS insert_setting(varchar,varchar);
-DROP FUNCTION IF EXISTS insert_level(varchar);
-DROP FUNCTION IF EXISTS upsert_player(varchar,varchar,varchar);
-DROP FUNCTION IF EXISTS insert_category(varchar);
-DROP FUNCTION IF EXISTS insert_statistic(varchar,varchar);
 ALTER TABLE match DROP CONSTRAINT FKmatch682879;
 ALTER TABLE match DROP CONSTRAINT FKmatch598647;
 ALTER TABLE player_session DROP CONSTRAINT FKplayer_ses609271;
@@ -193,7 +188,7 @@ DECLARE
 new_category_id int2;
 BEGIN
     INSERT INTO category(name) 
-    SELECT new_name WHERE NOT EXISTS 
+    SELECT new_category_name WHERE NOT EXISTS 
     (SELECT 1 FROM category c WHERE c.name=new_category_name);
 
     SELECT category.id into new_category_id from category where name=new_category_name;
