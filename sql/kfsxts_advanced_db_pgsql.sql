@@ -1,7 +1,6 @@
 DROP FUNCTION IF EXISTS upsert_player(varchar,varchar,varchar);
 DROP FUNCTION IF EXISTS insert_statistic(varchar,varchar);
 DROP FUNCTION IF EXISTS insert_match(uuid,varchar,varchar,varchar,varchar,int2);
-DROP FUNCTION IF EXISTS insert_wave_summary(uuid,int2);
 DROP FUNCTION IF EXISTS upsert_wave_summary(uuid,int2,bool,int4);
 ALTER TABLE match DROP CONSTRAINT FKmatch682879;
 ALTER TABLE match DROP CONSTRAINT FKmatch598647;
@@ -13,8 +12,10 @@ ALTER TABLE player_statistic DROP CONSTRAINT FKplayer_sta440784;
 ALTER TABLE match DROP CONSTRAINT FKmatch593517;
 ALTER TABLE wave_statistic  DROP CONSTRAINT FKwave_stati133088;
 ALTER TABLE wave_summary DROP CONSTRAINT FKwave_summa456733;
-ALTER TABLE wave_statistic  DROP CONSTRAINT FKwave_stati573684;
 ALTER TABLE statistic DROP CONSTRAINT FKstatistic966535;
+ALTER TABLE wave_statistic  DROP CONSTRAINT FKwave_stati573684;
+ALTER TABLE wave_summary_perk DROP CONSTRAINT FKwave_summa738015;
+ALTER TABLE wave_summary_perk DROP CONSTRAINT FKwave_summa968756;
 DROP TABLE IF EXISTS setting CASCADE;
 DROP TABLE IF EXISTS map CASCADE;
 DROP TABLE IF EXISTS match CASCADE;
@@ -26,6 +27,7 @@ DROP TABLE IF EXISTS statistic CASCADE;
 DROP TABLE IF EXISTS server CASCADE;
 DROP TABLE IF EXISTS wave_summary CASCADE;
 DROP TABLE IF EXISTS category CASCADE;
+DROP TABLE IF EXISTS wave_summary_perk CASCADE;
 CREATE TABLE setting (
   id          SERIAL NOT NULL, 
   difficulty varchar(15) NOT NULL, 
@@ -87,16 +89,18 @@ COMMENT ON COLUMN player_session.match_id IS 'Id of the match the player was a p
 COMMENT ON COLUMN player_session.wave IS 'Wave the match was on when the player ended his session';
 COMMENT ON COLUMN player_session.timestamp IS 'Date and time the player ended his session';
 COMMENT ON COLUMN player_session.duration IS 'How long the player''s session lasted';
-COMMENT ON COLUMN player_session.disconnected IS 'Stores whether or not the player ended the session before the match ended: 1=disconnected, 0=stayed the whole match';
-COMMENT ON COLUMN player_session.finale_played IS 'Stored whether or not the final wave was played: 1=finale played, 0=finale not reached';
-COMMENT ON COLUMN player_session.finale_survived IS 'Stores whether or not the player survived the finale: 1=survived, 0=died';
+COMMENT ON COLUMN player_session.disconnected IS 'True if the player left before the match ended';
+COMMENT ON COLUMN player_session.finale_played IS 'True if the player participated in the patriarch battle';
+COMMENT ON COLUMN player_session.finale_survived IS 'True if the player survived the patriarch battle';
 CREATE TABLE wave_statistic  (
   wave_summary_id int4 NOT NULL, 
   statistic_id    int2 NOT NULL, 
   perk_id         int2 NOT NULL, 
   value           int4 NOT NULL);
 COMMENT ON TABLE wave_statistic  IS 'Statistics that are grouped on a wave by wave basis';
+COMMENT ON COLUMN wave_statistic .wave_summary_id IS 'Wave summary that this entry provides more details for';
 COMMENT ON COLUMN wave_statistic .statistic_id IS 'Id of the statistic';
+COMMENT ON COLUMN wave_statistic .perk_id IS 'Id of the perk this statistic describes';
 COMMENT ON COLUMN wave_statistic .value IS 'Value of the data';
 CREATE TABLE player_statistic (
   statistic_id      int2 NOT NULL, 
@@ -124,12 +128,18 @@ COMMENT ON COLUMN server.id IS 'Server id';
 COMMENT ON COLUMN server.address IS 'Server address';
 COMMENT ON COLUMN server.port IS 'Server port';
 CREATE TABLE wave_summary (
-  id         SERIAL NOT NULL, 
-  match_id  uuid NOT NULL, 
-  wave      int2 NOT NULL, 
-  completed bool, 
-  duration  int4, 
+  id        SERIAL NOT NULL, 
+  match_id uuid NOT NULL, 
+  wave     int2 NOT NULL, 
+  survived bool, 
+  duration int4, 
   PRIMARY KEY (id));
+COMMENT ON TABLE wave_summary IS 'Summary of the results of the specific wave';
+COMMENT ON COLUMN wave_summary.id IS 'Unique ID for the wave summary';
+COMMENT ON COLUMN wave_summary.match_id IS 'ID of the match the summary is describing';
+COMMENT ON COLUMN wave_summary.wave IS 'Wave the entry is describing';
+COMMENT ON COLUMN wave_summary.survived IS 'True if the team survived the wave';
+COMMENT ON COLUMN wave_summary.duration IS 'How long the wave took to complete';
 CREATE TABLE category (
   id    SERIAL NOT NULL, 
   name varchar(32) NOT NULL UNIQUE, 
@@ -137,6 +147,14 @@ CREATE TABLE category (
 COMMENT ON TABLE category IS 'Categories that each statistic may fall under';
 COMMENT ON COLUMN category.id IS 'Id of the category';
 COMMENT ON COLUMN category.name IS 'Name of the category';
+CREATE TABLE wave_summary_perk (
+  wave_summary_id int4 NOT NULL, 
+  perk_id         int2 NOT NULL, 
+  count           int4);
+COMMENT ON TABLE wave_summary_perk IS 'Stores the perk counts for each wave';
+COMMENT ON COLUMN wave_summary_perk.wave_summary_id IS 'Wave summary that this entry provides perk information for';
+COMMENT ON COLUMN wave_summary_perk.perk_id IS 'Id of the perk';
+COMMENT ON COLUMN wave_summary_perk.count IS 'Number of times the perk was selected';
 ALTER TABLE match ADD CONSTRAINT FKmatch682879 FOREIGN KEY (setting_id) REFERENCES setting (id);
 ALTER TABLE match ADD CONSTRAINT FKmatch598647 FOREIGN KEY (map_id) REFERENCES map (id);
 ALTER TABLE player_session ADD CONSTRAINT FKplayer_ses609271 FOREIGN KEY (player_id) REFERENCES player (id);
@@ -147,8 +165,10 @@ ALTER TABLE player_statistic ADD CONSTRAINT FKplayer_sta440784 FOREIGN KEY (stat
 ALTER TABLE match ADD CONSTRAINT FKmatch593517 FOREIGN KEY (server_id) REFERENCES server (id);
 ALTER TABLE wave_statistic  ADD CONSTRAINT FKwave_stati133088 FOREIGN KEY (perk_id) REFERENCES statistic (id);
 ALTER TABLE wave_summary ADD CONSTRAINT FKwave_summa456733 FOREIGN KEY (match_id) REFERENCES match (id);
-ALTER TABLE wave_statistic  ADD CONSTRAINT FKwave_stati573684 FOREIGN KEY (wave_summary_id) REFERENCES wave_summary (id);
 ALTER TABLE statistic ADD CONSTRAINT FKstatistic966535 FOREIGN KEY (category_id) REFERENCES category (id);
+ALTER TABLE wave_statistic  ADD CONSTRAINT FKwave_stati573684 FOREIGN KEY (wave_summary_id) REFERENCES wave_summary (id);
+ALTER TABLE wave_summary_perk ADD CONSTRAINT FKwave_summa738015 FOREIGN KEY (wave_summary_id) REFERENCES wave_summary (id);
+ALTER TABLE wave_summary_perk ADD CONSTRAINT FKwave_summa968756 FOREIGN KEY (perk_id) REFERENCES statistic (id);
 CREATE UNIQUE INDEX setting_index 
   ON setting (difficulty, length);
 CREATE UNIQUE INDEX map_name 
@@ -167,6 +187,8 @@ CREATE UNIQUE INDEX server_index
   ON server (address, port);
 CREATE UNIQUE INDEX wave_summary_index 
   ON wave_summary (match_id, wave);
+CREATE UNIQUE INDEX wave_summary_perk_index 
+  ON wave_summary_perk (wave_summary_id, perk_id);
 CREATE FUNCTION upsert_player(new_id varchar(20), new_name varchar(64), new_avatar varchar(255)) RETURNS VOID AS $$
 BEGIN
     LOOP
@@ -218,23 +240,15 @@ BEGIN
     
 END; $$
 LANGUAGE plpgsql;
-CREATE FUNCTION insert_wave_summary(new_match_id uuid, new_wave int2) RETURNS VOID AS $$
-BEGIN
-    INSERT INTO wave_summary(match_id,wave) 
-    SELECT new_match_id, new_wave WHERE NOT EXISTS 
-    (SELECT 1 FROM wave_summary ws WHERE ws.match_id=new_match_id AND ws.wave=new_wave);
-END;
-$$
-LANGUAGE plpgsql;
-CREATE FUNCTION upsert_wave_summary(new_match_id uuid, new_wave int2, was_completed bool, wave_duration int4) RETURNS VOID AS $$
+CREATE FUNCTION upsert_wave_summary(new_match_id uuid, new_wave int2, was_survived bool, wave_duration int4) RETURNS VOID AS $$
 BEGIN
     LOOP
-        UPDATE wave_summary SET completed=was_completed, duration=wave_duration WHERE match_id=new_match_id AND wave=new_wave;
+        UPDATE wave_summary SET survived=was_survived, duration=wave_duration WHERE match_id=new_match_id AND wave=new_wave;
         IF found THEN
             RETURN;
         END IF;
         BEGIN
-            INSERT INTO wave_summary(match_id, wave) VALUES (new_match_id, new_wave);
+            INSERT INTO wave_summary(match_id, wave, survived, duration) VALUES (new_match_id, new_wave, was_survived, wave_duration);
             RETURN;
         EXCEPTION WHEN unique_violation THEN
         END;

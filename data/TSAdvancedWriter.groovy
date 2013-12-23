@@ -70,27 +70,31 @@ public abstract class TSAdvancedWriter implements DataWriter {
                                 insertMatch(state.uuid, state.difficulty, state.length, state.map, state.address, state.port)
                                 state.createdMatchEntry= true
                             }
+                            upsertWaveSummary(state.uuid, packet.getWave(), attrs.completed, attrs.duration)
                             packet.getStats().each {stat, count ->
                                 insertStatistic(perksCategory, stat)
+                                sql.execute("""insert into wave_summary_perk(wave_summary_id, perk_id, count) values (
+                                        (select id from wave_summary where match_id=? and wave=?),
+                                        (select id from statistic where category_id=(select id from category where name='$perksCategory') and name=?),
+                                        ?)""", [state.uuid, packet.getWave(), stat, count])
                             }
-                            upsertWaveSummary(state.uuid, packet.getWave(), attrs.completed, attrs.duration)
                             break
                         default:
                             if (!state.createdMatchEntry) {
                                 insertMatch(state.uuid, state.difficulty, state.length, state.map, state.address, state.port)
                                 state.createdMatchEntry= true
                             }
-                            insertWaveSummary(state.uuid, packet.getWave())
+                            upsertWaveSummary(state.uuid, packet.getWave(), null, null)
                             insertStatistic(perksCategory, attrs.perk)
                             packet.getStats().keySet().each {stat ->
-                                insertStatistic(packet.getCategory(), stat)
+                                insertStatistic(attrs.type, stat)
                             }
                             sql.withBatch("""insert into wave_statistic (wave_summary_id, statistic_id, perk_id, value) values (
                                     (select id from wave_summary where match_id=? and wave=?),
                                     (select id from statistic where category_id=(select id from category where name=?) and name=?), 
                                     (select id from statistic where category_id=(select id from category where name='$perksCategory') and name=?), ?)""") {ps ->
                                 packet.getStats().each {name, value ->
-                                    ps.addBatch([state.uuid, packet.getWave(), packet.getCategory(), name, attrs.perk, value])
+                                    ps.addBatch([state.uuid, packet.getWave(), attrs.type, name, attrs.perk, value])
                                 }
                             }
                             break
@@ -100,21 +104,24 @@ public abstract class TSAdvancedWriter implements DataWriter {
         }
     }
     public void writePlayerData(PlayerContent content) {
-        def uuid= matchStates[content.getServerAddressPort()].uuid
+        def state= matchStates[content.getServerAddressPort()]
         def matchInfo= content.getMatchInfo()
         
         sql.withTransaction {
-            insertPlayerSession(content.getSteamID64(), matchInfo, uuid, dateFormat.format(Calendar.getInstance().getTime()))
+            if (!state.createdMatchEntry) {
+                insertMatch(state.uuid, state.difficulty, state.length, state.map, state.address, state.port)
+                state.createdMatchEntry= true
+            }
+            insertPlayerSession(content.getSteamID64(), matchInfo, state.uuid, dateFormat.format(Calendar.getInstance().getTime()))
             content.getPackets().each {packet ->
                 packet.getStats().keySet().each {name ->
                     insertStatistic(packet.getCategory(), name)
                 }
             }
-            insertPlayerStatistic(content.getPackets(), content.getSteamID64(), uuid)
+            insertPlayerStatistic(content.getPackets(), content.getSteamID64(), state.uuid)
         }
     }
 
-    protected abstract void insertWaveSummary(uuid, wave)
     protected abstract void upsertWaveSummary(uuid, wave, completed, duration)
     protected abstract void insertMatch(uuid, difficulty, length, map, address, port)
     protected abstract void updateMatch(wave, result, time, duration, uuid)

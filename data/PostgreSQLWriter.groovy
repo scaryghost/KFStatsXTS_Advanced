@@ -5,9 +5,6 @@ public class PostgreSQLWriter extends TSAdvancedWriter {
         super(conn)
     }
 
-    protected void insertWaveSummary(uuid, wave) {
-        sql.call("{call insert_wave_summary(?, ?::int2)}", [uuid, wave])
-    }
     protected void upsertWaveSummary(uuid, wave, completed, duration) {
         sql.call("{call upsert_wave_summary(?, ?::int2, ?, ?)}", [uuid, wave, completed, duration])
     }
