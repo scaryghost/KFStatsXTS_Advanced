@@ -22,11 +22,13 @@ public class PostgreSQLWriter extends TSAdvancedWriter {
             }
         }
     }
+    protected void insertWaveSummary(uuid, wave) {
+        sql.execute("insert into wave_summary values (?,?)", [uuid, wave])
+    }
     protected void upsertWaveSummary(uuid, wave, completed, duration) {
         sql.call("{call upsert_wave_summary(?, ?::smallint, ?, ?)}", [uuid, wave, completed, duration])
     }
     protected void insertMatch(uuid, difficulty, length, map, address, port) {
-        System.err.println([uuid, difficulty, length, map, address, port])
         sql.call("{call insert_match(?, ?, ?, ?, ?, ?::smallint)}", [uuid, difficulty, length, map, address, port])
     }
     protected void updateMatch(wave, result, time, duration, uuid) {

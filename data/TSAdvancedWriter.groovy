@@ -79,9 +79,9 @@ public abstract class TSAdvancedWriter implements DataWriter {
                         default:
                             if (!state.createdMatchEntry) {
                                 insertMatch(state.uuid, state.difficulty, state.length, state.map, state.address, state.port)
+                                insertWaveSummary(state.uuid, packet.getWave())
                                 state.createdMatchEntry= true
                             }
-                            upsertWaveSummary(state.uuid, packet.getWave(), null, null)
                             insertStatistic(perksCategory, attrs.perk)
                             packet.getStats().keySet().each {stat ->
                                 insertStatistic(attrs.type, stat)
@@ -114,6 +114,7 @@ public abstract class TSAdvancedWriter implements DataWriter {
 
     protected abstract void insertWaveSummaryPerk(uuid, wave, stat, count)
     protected abstract void insertWaveStatistics(uuid, wave, type, perk, stats)
+    protected abstract void insertWaveSummary(uuid, wave)
     protected abstract void upsertWaveSummary(uuid, wave, completed, duration)
     protected abstract void insertMatch(uuid, difficulty, length, map, address, port)
     protected abstract void updateMatch(wave, result, time, duration, uuid)
