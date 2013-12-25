@@ -73,10 +73,7 @@ public abstract class TSAdvancedWriter implements DataWriter {
                             upsertWaveSummary(state.uuid, packet.getWave(), attrs.completed, attrs.duration)
                             packet.getStats().each {stat, count ->
                                 insertStatistic(perksCategory, stat)
-                                sql.execute("""insert into wave_summary_perk(wave_summary_id, perk_id, count) values (
-                                        (select id from wave_summary where match_id=? and wave=?),
-                                        (select id from statistic where category_id=(select id from category where name='$perksCategory') and name=?),
-                                        ?)""", [state.uuid, packet.getWave(), stat, count])
+                                insertWaveSummaryPerk(state.uuid, packet.getWave(), stat, count)
                             }
                             break
                         default:
@@ -89,14 +86,7 @@ public abstract class TSAdvancedWriter implements DataWriter {
                             packet.getStats().keySet().each {stat ->
                                 insertStatistic(attrs.type, stat)
                             }
-                            sql.withBatch("""insert into wave_statistic (wave_summary_id, statistic_id, perk_id, value) values (
-                                    (select id from wave_summary where match_id=? and wave=?),
-                                    (select id from statistic where category_id=(select id from category where name=?) and name=?), 
-                                    (select id from statistic where category_id=(select id from category where name='$perksCategory') and name=?), ?)""") {ps ->
-                                packet.getStats().each {name, value ->
-                                    ps.addBatch([state.uuid, packet.getWave(), attrs.type, name, attrs.perk, value])
-                                }
-                            }
+                            insertWaveStatistics(state.uuid, packet.getWave(), attrs.type, attrs.perk, packet.getStats())
                             break
                     }
                     break
@@ -122,6 +112,8 @@ public abstract class TSAdvancedWriter implements DataWriter {
         }
     }
 
+    protected abstract void insertWaveSummaryPerk(uuid, wave, stat, count)
+    protected abstract void insertWaveStatistics(uuid, wave, type, perk, stats)
     protected abstract void upsertWaveSummary(uuid, wave, completed, duration)
     protected abstract void insertMatch(uuid, difficulty, length, map, address, port)
     protected abstract void updateMatch(wave, result, time, duration, uuid)

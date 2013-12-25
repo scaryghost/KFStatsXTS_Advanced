@@ -5,12 +5,29 @@ public class PostgreSQLWriter extends TSAdvancedWriter {
         super(conn)
     }
 
+    protected void insertWaveSummaryPerk(uuid, wave, stat, count) {
+        sql.execute("""insert into wave_summary_perk(wave_summary_id, perk_id, count) values (
+                (select id from wave_summary where match_id=? and wave=?),
+                (select id from statistic where category_id=(select id from category where name='$perksCategory') and name=?),
+                ?)""", [uuid, wave, stat, count])
+    }
+    protected void insertWaveStatistics(uuid, wave, type, perk, stats) {
+        sql.withBatch("""insert into wave_statistic (wave_summary_id, statistic_id, perk_id, value) values (
+                (select id from wave_summary where match_id=? and wave=?),
+                (select id from statistic where category_id=(select id from category where name=?) and name=?), 
+                (select id from statistic where category_id=(select id from category where name='$perksCategory') and name=?),
+                ?)""") {ps ->
+            stats.each {name, value ->
+                ps.addBatch([uuid, wave, type, name, perk, value])
+            }
+        }
+    }
     protected void upsertWaveSummary(uuid, wave, completed, duration) {
-        sql.call("{call upsert_wave_summary(?, ?::int2, ?, ?)}", [uuid, wave, completed, duration])
+        sql.call("{call upsert_wave_summary(?, ?::smallint, ?, ?)}", [uuid, wave, completed, duration])
     }
     protected void insertMatch(uuid, difficulty, length, map, address, port) {
         System.err.println([uuid, difficulty, length, map, address, port])
-        sql.call("{call insert_match(?, ?, ?, ?, ?, ?::int2)}", [uuid, difficulty, length, map, address, port])
+        sql.call("{call insert_match(?, ?, ?, ?, ?, ?::smallint)}", [uuid, difficulty, length, map, address, port])
     }
     protected void updateMatch(wave, result, time, duration, uuid) {
         sql.execute("update match set wave=?, result=?, timestamp=?::timestamp, duration=? where id=?", 
