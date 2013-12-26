@@ -26,10 +26,7 @@ public class MySQLWriter extends PostgreSQLWriter {
                 [wave, result, time, duration, uuid.toString()])
     }
     protected void insertPlayerSession(steamid64, info, uuid, time) {
-        sql.execute("""insert into player_session (player_id, match_id, wave, timestamp, duration, disconnected, finale_played, finale_survived) 
-            values (?, ?, ?, ?, ?, ?, ?, ?)""", 
-            [steamid64, uuid.toString(), info.wave, time, info.duration, info.disconnected, 
-            info.finalWave == 1, info.finalWaveSurvived == 1])
+        super.insertPlayerSession(steamid64, info, uuid.toString(), time)
     }
     protected void insertPlayerStatistic(packets, steamid64, uuid) {
         super.insertPlayerStatistic(packets, steamid64, uuid.toString())
