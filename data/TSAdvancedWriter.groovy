@@ -36,13 +36,13 @@ public abstract class TSAdvancedWriter implements DataWriter {
     public void writeSteamInfo(Collection<SteamInfo> steamInfo) {
         sql.withTransaction {
             steamInfo.each {info ->
-                upsertPlayer(info)
+                upsertPlayer(steamInfo)
             }
         }
     }
     public void writeSteamInfo(SteamInfo steamInfo) {
         sql.withTransaction {
-            upsertPlayer(info)
+            upsertPlayer(steamInfo)
         }
     }
     public void writeMatchData(MatchPacket packet) {
