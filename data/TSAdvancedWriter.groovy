@@ -36,13 +36,13 @@ public abstract class TSAdvancedWriter implements DataWriter {
     public void writeSteamInfo(Collection<SteamInfo> steamInfo) {
         sql.withTransaction {
             steamInfo.each {info ->
-                sql.call("{call upsert_player(?, ?, ?)}", [info.steamID64, info.name, info.avatar])
+                upsertPlayer(info)
             }
         }
     }
     public void writeSteamInfo(SteamInfo steamInfo) {
         sql.withTransaction {
-            sql.call("{call upsert_player(?, ?, ?)}", [steamInfo.steamID64, steamInfo.name, steamInfo.avatar])
+            upsertPlayer(info)
         }
     }
     public void writeMatchData(MatchPacket packet) {
@@ -132,6 +132,7 @@ public abstract class TSAdvancedWriter implements DataWriter {
     protected void insertWaveSummary(uuid, wave) {
         sql.execute("insert into wave_summary values (?,?)", [uuid, wave])
     }
+    protected abstract void upsertPlayer(info)
     protected abstract void upsertWaveSummary(uuid, wave, completed, duration)
     protected abstract void insertMatch(uuid, difficulty, length, map, address, port)
     protected abstract void updateMatch(wave, result, time, duration, uuid)
