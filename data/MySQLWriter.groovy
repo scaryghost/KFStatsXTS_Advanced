@@ -1,5 +1,5 @@
-import com.github.etsai.kfsxtrackingserver.PacketParser.Result
 import java.sql.Connection
+import groovy.sql.Sql
 
 public class MySQLWriter extends StoredProcedureWriter {
     public MySQLWriter(Connection conn) {
@@ -23,7 +23,7 @@ public class MySQLWriter extends StoredProcedureWriter {
     }
     protected void updateMatch(wave, result, time, duration, uuid) {
         sql.execute("update `match` set wave=?, result=?, timestamp=?, duration=? where id=?", 
-                [wave, result, time, duration, uuid.toString()])
+                [wave, result, Sql.TIMESTAMP(time), duration, uuid.toString()])
     }
     protected void insertPlayerSession(steamid64, info, uuid, time) {
         super.insertPlayerSession(steamid64, info, uuid.toString(), time)

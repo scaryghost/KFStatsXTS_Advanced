@@ -135,12 +135,15 @@ public abstract class TSAdvancedWriter implements DataWriter {
     protected abstract void upsertPlayer(info)
     protected abstract void upsertWaveSummary(uuid, wave, completed, duration)
     protected abstract void insertMatch(uuid, difficulty, length, map, address, port)
-    protected abstract void updateMatch(wave, result, time, duration, uuid)
+    protected void updateMatch(wave, result, time, duration, uuid) {
+        sql.execute("update match set wave=?, result=?, timestamp=?, duration=? where id=?", 
+                [wave, result, Sql.TIMESTAMP(time), duration, uuid])
+    }
     protected abstract void insertStatistic(category, name)
     protected void insertPlayerSession(steamid64, info, uuid, time) {
         sql.execute("""insert into player_session (player_id, match_id, wave, timestamp, duration, disconnected, finale_played, finale_survived) 
             values (?, ?, ?, ?, ?, ?, ?, ?)""", 
-            [steamid64, uuid, info.wave, time, info.duration, info.disconnected, 
+            [steamid64, uuid, info.wave, Sql.TIMESTAMP(time), info.duration, info.disconnected, 
             info.finalWave == 1, info.finalWaveSurvived == 1])
     }
     protected void insertPlayerStatistic(packets, steamid64, uuid) {
