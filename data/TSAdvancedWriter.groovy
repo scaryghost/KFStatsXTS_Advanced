@@ -16,7 +16,8 @@ public abstract class TSAdvancedWriter implements DataWriter {
     protected final def matchStates, dateFormat, sql, perksCategory= "perks"
 
     protected static class State {
-        public def uuid, difficulty, length, map, address, port, createdMatchEntry
+        public def uuid, difficulty, length, map, address, port, 
+                createdMatchEntry, lastWave
     }
 
     public TSAdvancedWriter(Connection conn) {
@@ -52,7 +53,7 @@ public abstract class TSAdvancedWriter implements DataWriter {
             switch (packet.getCategory()) {
                 case "info":
                     def values= packet.getAttributes() + [uuid: UUID.randomUUID(), address: packet.getServerAddress(), 
-                            port: packet.getServerPort(), createdMatchEntry: false]
+                            port: packet.getServerPort(), createdMatchEntry: false, lastWave: 0]
                     matchStates[packet.getServerAddressPort()]= new State(values) 
                     break
                 case "result":
@@ -70,6 +71,7 @@ public abstract class TSAdvancedWriter implements DataWriter {
                                 insertMatch(state.uuid, state.difficulty, state.length, state.map, state.address, state.port)
                                 state.createdMatchEntry= true
                             }
+                            state.lastWave= packet.getWave()
                             upsertWaveSummary(state.uuid, packet.getWave(), attrs.completed, attrs.duration)
                             packet.getStats().each {stat, count ->
                                 insertStatistic(perksCategory, stat)
@@ -79,8 +81,11 @@ public abstract class TSAdvancedWriter implements DataWriter {
                         default:
                             if (!state.createdMatchEntry) {
                                 insertMatch(state.uuid, state.difficulty, state.length, state.map, state.address, state.port)
-                                insertWaveSummary(state.uuid, packet.getWave())
                                 state.createdMatchEntry= true
+                            }
+                            if (state.lastWave != packet.getWave()) {
+                                state.lastWave= packet.getWave()
+                                insertWaveSummary(state.uuid, packet.getWave())
                             }
                             insertStatistic(perksCategory, attrs.perk)
                             packet.getStats().keySet().each {stat ->
@@ -130,7 +135,7 @@ public abstract class TSAdvancedWriter implements DataWriter {
         }
     }
     protected void insertWaveSummary(uuid, wave) {
-        sql.execute("insert into wave_summary values (?,?)", [uuid, wave])
+        sql.execute("insert into wave_summary(match_id, wave) values (?,?)", [uuid, wave])
     }
     protected abstract void upsertPlayer(info)
     protected abstract void upsertWaveSummary(uuid, wave, completed, duration)
