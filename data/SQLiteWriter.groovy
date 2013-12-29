@@ -37,8 +37,7 @@ public class SQLiteWriter extends TSAdvancedWriter {
                 [uuid.toString(), difficulty, length, map, address, port])
     }
     protected void updateMatch(wave, result, time, duration, uuid) {
-        sql.execute("update match set wave=?, result=?, timestamp=?, duration=? where id=?",
-                [wave, result, time, duration, uuid.toString()])
+        super.updateMatch(wave, result, time, duration, uuid.toString())
     }
     protected void insertStatistic(category, name) {
         sql.execute("insert or ignore into category(name) values ($category)")
