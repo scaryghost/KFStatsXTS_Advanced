@@ -217,7 +217,7 @@ public class TSAdvancedReader implements DataReader {
                 inner join wave_summary ws2 on ws2.id=ws.wave_summary_id inner join match m on m.id=ws2.match_id 
                 where s.category_id in (select id from category c where c.name=$category) and 
                 m.setting_id=(select id from setting where difficulty=$difficulty and length=$length) 
-                group by s.name,ws2.wave""") {
+                group by s.name,ws2.wave order by ws2.wave ASC""") {
             waveStats << new WaveStat(it.toRowResult())
         }
         return waveStats
@@ -230,7 +230,7 @@ public class TSAdvancedReader implements DataReader {
                 where s.category_id in (select id from category c where c.name=$category) and 
                 m.setting_id=(select id from setting where difficulty=$difficulty and length=$length) and
                 m.map_id=(select id from map m2 where m2.name=$level)
-                group by s.name,ws2.wave""") {
+                group by s.name,ws2.wave order by ws2.wave ASC""") {
             waveStats << new WaveStat(it.toRowResult())
         }
         return waveStats
