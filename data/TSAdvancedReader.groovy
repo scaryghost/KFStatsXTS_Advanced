@@ -144,10 +144,15 @@ public class TSAdvancedReader implements DataReader {
         def orderStr= (group != null && order != Order.NONE) ? "order by $group $order" : ""
 
         def matches= []
-        sql.eachRow('''select s.difficulty,s.length,m2.name as level,m.result,ps.duration,
+        sql.eachRow('''select s.difficulty,s.length,m2.name as level,ps.duration,
+                case when ps.disconnected=true then 'disconnect'
+                    when m.result=1 then 'win'
+                    when m.result=0 then 'loss'
+                    when m.result=-1 then 'loss'
+                end as result,
                 ps.timestamp,ps.wave from player_session ps inner join match m on m.id=ps.match_id 
                 inner join setting s on m.setting_id=s.id inner join map m2 on m2.id=m.map_id 
-                where player_id=? and m.result is not NULL''' + orderStr + ' LIMIT ? OFFSET ?', [steamID64, end - start, start]) {
+                where player_id=? and m.result is not NULL ''' + orderStr + ' LIMIT ? OFFSET ?', [steamID64, end - start, start]) {
             matches << new Match(it.toRowResult())
         }
         return matches
@@ -156,7 +161,12 @@ public class TSAdvancedReader implements DataReader {
     public Collection<Match> getMatchHistory(String steamID64) {
         def matches= []
         ///< TODO: match history result needs to be win,loss,or disconnect
-        sql.eachRow("""select s.difficulty,s.length,m2.name as level,m.result,ps.duration,
+        sql.eachRow("""select s.difficulty,s.length,m2.name as level,ps.duration,
+                case when ps.disconnected=true then 'disconnect'
+                    when m.result=1 then 'win'
+                    when m.result=0 then 'loss'
+                    when m.result=-1 then 'loss'
+                end as result,
                 ps.timestamp,ps.wave from player_session ps inner join match m on m.id=ps.match_id 
                 inner join setting s on m.setting_id=s.id inner join map m2 on m2.id=m.map_id 
                 where player_id=$steamID64 and m.result is not NULL""") {
@@ -189,9 +199,10 @@ public class TSAdvancedReader implements DataReader {
     public Collection<Stat> getAggregateData(String category, String steamID64) {
         def stats= []
 
-        sql.eachRow("""select s.name,sum(ps.value) as value from player_statistic ps inner join statistic s on s.id=ps.statistic_id 
-                where s.category_id in (select id from category where name=$category) and ps.player_id=$steamID64 group by s.name""") {
-            stats << new Stat(it)
+        sql.eachRow("""select s.name as stat,sum(ps.value) as value from player_statistic ps inner join statistic s on s.id=ps.statistic_id 
+                where s.category_id in (select id from category where name=$category) and ps.player_session_id  in 
+                (select id from player_session ps2 where ps2.player_id=$steamID64) group by s.name""") {
+            stats << new Stat(it.toRowResult())
         }
         return stats
     }
@@ -202,25 +213,25 @@ public class TSAdvancedReader implements DataReader {
     public Collection<WaveStat> getWaveData(String difficulty, String length, String category) {
         def waveStats= []
 
-        sql.eachRow("""select s.name,sum(ws.value) as value_sum,ws2.wave from wave_statistic ws inner join statistic s on ws.statistic_id=s.id 
+        sql.eachRow("""select s.name as stat,sum(ws.value) as value,ws2.wave from wave_statistic ws inner join statistic s on ws.statistic_id=s.id 
                 inner join wave_summary ws2 on ws2.id=ws.wave_summary_id inner join match m on m.id=ws2.match_id 
                 where s.category_id in (select id from category c where c.name=$category) and 
                 m.setting_id=(select id from setting where difficulty=$difficulty and length=$length) 
                 group by s.name,ws2.wave""") {
-            waveStats << new WaveStat(stat: it.name, value: it.value_sum, wave: it.wave)
+            waveStats << new WaveStat(it.toRowResult())
         }
         return waveStats
     }
     public Collection<WaveStat> getWaveData(String level, String difficulty, String length, String category) {
         def waveStats= []
 
-        sql.eachRow("""select s.name,sum(ws.value) as value_sum,ws2.wave from wave_statistic ws inner join statistic s on ws.statistic_id=s.id 
+        sql.eachRow("""select s.name as stat,sum(ws.value) as value,ws2.wave from wave_statistic ws inner join statistic s on ws.statistic_id=s.id 
                 inner join wave_summary ws2 on ws2.id=ws.wave_summary_id inner join match m on m.id=ws2.match_id 
                 where s.category_id in (select id from category c where c.name=$category) and 
                 m.setting_id=(select id from setting where difficulty=$difficulty and length=$length) and
                 m.map_id=(select id from map m2 where m2.name=$level)
                 group by s.name,ws2.wave""") {
-            waveStats << new WaveStat(stat: it.name, value: it.value_sum, wave: it.wave)
+            waveStats << new WaveStat(it.toRowResult())
         }
         return waveStats
     }
