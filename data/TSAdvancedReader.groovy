@@ -1,15 +1,16 @@
-import static com.github.etsai.kfsxtrackingserver.DataReader.*
-import com.github.etsai.kfsxtrackingserver.DataReader
+import static com.github.etsai.kfsxtrackingserver.DefaultReader.*
+import com.github.etsai.kfsxtrackingserver.DefaultReader
 import groovy.sql.Sql
 import java.sql.Connection
 
-public class TSAdvancedReader implements DataReader {
+public class TSAdvancedReader {
     private final def sql
 
     public TSAdvancedReader(Connection conn) {
         this.sql= new Sql(conn)
     }
 
+/*
     private void resultAggregator(accum, row) {
         def rowResult= row.toRowResult()
         def result= rowResult.result
@@ -267,5 +268,5 @@ public class TSAdvancedReader implements DataReader {
     public Object getData(String queryName, List<Object> parameters) {
         throw new UnsupportedOperationException("Not yet implemented")
     }
-
+*/
 }
