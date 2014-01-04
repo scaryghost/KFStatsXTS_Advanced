@@ -48,20 +48,52 @@ public class Index extends Resource {
 
 			function onDataReceived(series) {
 
-				// Extract the first coordinate pair; jQuery has parsed it, so
-				// the data is now just an ordinary JavaScript object
-
-				var firstcoordinate = "(" + series.data[0][0] + ", " + series.data[0][1] + ")";
-				button.siblings("span").text("Fetched " + series.label + ", first point: " + firstcoordinate);
-
-				// Push the new data onto our existing data array
-
 				if (!alreadyFetched[series.label]) {
 					alreadyFetched[series.label] = true;
 					data.push(series);
 				}
 
-				\$.plot("#placeholder", data, options);
+                var i = 0;
+		\$.each(series, function(key, val) {
+			val.color = i;
+			++i;
+		});
+
+		// insert checkboxes 
+		var choiceContainer = \$("#choices");
+		\$.each(series, function(key, val) {
+			choiceContainer.append("<br/><input type='checkbox' name='" + key +
+				"' checked='checked' id='id" + key + "'></input>" +
+				"<label for='id" + key + "'>"
+				+ val.label + "</label>");
+		});
+
+		choiceContainer.find("input").click(plotAccordingToChoices);
+
+		function plotAccordingToChoices() {
+
+			var data = [];
+
+			choiceContainer.find("input:checked").each(function () {
+				var key = \$(this).attr("name");
+				if (key && series[key]) {
+					data.push(series[key]);
+				}
+			});
+
+			if (data.length > 0) {
+				\$.plot("#placeholder", data, {
+					yaxis: {
+						min: 0
+					},
+					xaxis: {
+						tickDecimals: 0
+					}
+				});
+			}
+		}
+
+		plotAccordingToChoices();
 			}
 
 			\$.ajax({
@@ -136,7 +168,8 @@ public class Index extends Resource {
                 }
                 div(id:'content') {
                     div(class:"demo-container") {
-                        div(id:"placeholder",class:"demo-placeholder", '')
+                        div(id:"placeholder",class:"demo-placeholder", style: 'float:left; width:675px;','')
+                        p(id:'choices', style:'float:right; width:135px', '')
                     }
                     p() {
                         button(class:"fetchSeries", 'First dataset')
