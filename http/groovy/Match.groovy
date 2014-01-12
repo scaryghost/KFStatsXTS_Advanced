@@ -2,11 +2,15 @@ import com.github.etsai.kfsxtrackingserver.web.Resource
 import groovy.xml.MarkupBuilder
 
 public class Index extends Resource {
-    private def resultNames= [(-1): "Loss", (0): "Map Voted", (1): "Win"]
+    private def resultNames= [(-1): "Loss", (0): "Map Voted", (1): "Win"],
+            matchUUID= '49d51490-c7ff-4389-afa9-3ad12a0412d5'
 
     public String generatePage() {
         def writer= new StringWriter()
         def htmlBuilder= new MarkupBuilder(writer)
+        def waveData= reader.executeQuery("server_match_wave_data", matchUUID)
+        def wavePerks= reader.executeQuery("server_match_wave_perks", matchUUID)
+        def waves= wavePerks.collect(new TreeSet()){ it.wave }
 
         htmlBuilder.html() {
             head() {
@@ -50,8 +54,8 @@ public class Index extends Resource {
                     h2('Match Information')
                 }
                 div(id:'content') {
-                    div(style: 'float:left;width: 50%') {
-                        def summary= reader.executeQuery("server_match",'3b4c0c99-5f51-4a61-b39e-f7e8d298e30c')
+                    div(style: 'float: left; width: 50%;') {
+                        def summary= reader.executeQuery("server_match", matchUUID)
                         table() {
                             tbody() {
                                 tr() {
@@ -89,6 +93,33 @@ public class Index extends Resource {
                         div(id:"placeholder",class:"demo-placeholder",'')
                     }
                 }
+                    def waveSummaries= reader.executeQuery("server_wave_summaries", matchUUID)
+                    waves.each {wave ->
+                        def perks= wavePerks.findAll{ it.wave == wave }
+                        def summary= waveSummaries.find{ it.wave == wave }
+                        println waveSummaries
+                        div(id: "wave_section_$wave", style:"clear: right; width: 1024px") {
+                            table(style: 'width: 50%', border: 1) {
+                                tr() {
+                                    td('Perks')
+                                    perks.each {p ->
+                                        td(p.name, style: "width: 50%")
+                                        td(p.count)
+                                    }
+                                }
+                                tr() {
+                                    td('Duration')
+                                    td(summary.duration)
+                                    td()
+                                }
+                                tr() {
+                                    td('Survived')
+                                    td(summary.survived)
+                                    td()
+                                }
+                            }
+                        }
+                    }
             }
         }
 
