@@ -97,7 +97,8 @@ public class Index extends Resource {
                     waves.each {wave ->
                         def perks= wavePerks.findAll{ it.wave == wave }
                         def summary= waveSummaries.find{ it.wave == wave }
-                        println waveSummaries
+                        def data= waveData.findAll{ it.wave == wave }
+
                         div(id: "wave_section_$wave", style:"clear: right; width: 1024px") {
                             table(style: 'width: 50%', border: 1) {
                                 tr() {
@@ -116,6 +117,30 @@ public class Index extends Resource {
                                     td('Survived')
                                     td(summary.survived)
                                     td()
+                                }
+                            }
+                            data.collect(new HashSet()){ it.category }.each {category->
+                                table() {
+                                    thead() {
+                                        tr() {
+                                            th(category)
+                                            perks.each {perk ->
+                                                th(perk.name)
+                                            }
+                                        }
+                                    }
+                                    tbody() {
+                                        data.findAll{it.category == category}.collect(new HashSet()){ it.stat }.each {stat ->
+                                            tr() {
+                                                td(stat)
+                                                perks.each {perk ->
+
+                                                    def result= data.find{it.category == category && it.stat == stat && it.perk == perk.name}
+                                                    td(result == null ? 0 : result.value)
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
