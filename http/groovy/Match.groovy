@@ -3,7 +3,7 @@ import groovy.xml.MarkupBuilder
 
 public class Index extends Resource {
     private def resultNames= [(-1): "Loss", (0): "Map Voted", (1): "Win"],
-            matchUUID= '49d51490-c7ff-4389-afa9-3ad12a0412d5'
+            matchUUID= '532c7656-073a-4a38-8f19-3ea56f352321'
 
     public String generatePage() {
         def writer= new StringWriter()
@@ -102,8 +102,13 @@ public class Index extends Resource {
                         div(id: "wave_section_$wave", style:"clear: right; width: 1024px") {
                             table(style: 'width: 50%', border: 1) {
                                 tr() {
-                                    td('Perks')
-                                    perks.each {p ->
+                                    def head= perks.head()
+                                    td(rowspan: perks.size(), 'Perks')
+                                    td(head.name, style: "width: 50%")
+                                    td(head.count)
+                                }
+                                perks.tail().each {p ->
+                                    tr() {
                                         td(p.name, style: "width: 50%")
                                         td(p.count)
                                     }

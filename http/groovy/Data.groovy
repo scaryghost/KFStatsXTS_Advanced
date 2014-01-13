@@ -6,7 +6,7 @@ public class Data extends Resource {
         def builder= new JsonBuilder()
         builder(
             label: "Wave Duration",
-            data: reader.executeQuery("server_wave_summaries", '49d51490-c7ff-4389-afa9-3ad12a0412d5').collect {
+            data: reader.executeQuery("server_wave_summaries", '532c7656-073a-4a38-8f19-3ea56f352321').collect {
                 [it.wave, it.duration]
             }
         )
