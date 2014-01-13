@@ -30,6 +30,10 @@ public class Index extends Resource {
             points: {
                 show: true
             },
+            grid: {
+				hoverable: true,
+				clickable: true
+			},
             xaxis: {
                 tickDecimals: 0,
                 tickSize: 1
@@ -45,6 +49,26 @@ public class Index extends Resource {
                     dataType: "json",
                     success: onDataReceived
                 });
+    \$("<div id='tooltip'></div>").css({
+			position: "absolute",
+			display: "none",
+			border: "1px solid #fdd",
+			padding: "2px",
+			"background-color": "#fee",
+			opacity: 0.80
+		}).appendTo("body");
+        \$("#placeholder").bind("plothover", function (event, pos, item) {
+				if (item) {
+					var x = item.datapoint[0].toFixed(2),
+						y = item.datapoint[1].toFixed(2);
+
+					$("#tooltip").html(y + "s")
+						.css({top: item.pageY+5, left: item.pageX+5})
+						.fadeIn(200);
+				} else {
+					$("#tooltip").hide();
+				}
+		});
       });
 '''
                 }
@@ -149,6 +173,7 @@ public class Index extends Resource {
                                 }
                             }
                         }
+                        hr()
                     }
             }
         }
