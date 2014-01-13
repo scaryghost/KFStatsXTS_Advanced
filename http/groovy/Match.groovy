@@ -1,11 +1,12 @@
 import com.github.etsai.kfsxtrackingserver.web.Resource
 import groovy.xml.MarkupBuilder
+import java.util.UUID
 
 public class Index extends Resource {
-    private def resultNames= [(-1): "Loss", (0): "Map Voted", (1): "Win"],
-            matchUUID= '532c7656-073a-4a38-8f19-3ea56f352321'
+    private def resultNames= [(-1): "Loss", (0): "Map Voted", (1): "Win"]
 
     public String generatePage() {
+        def matchUUID= UUID.fromString(queries.matchuuid)
         def writer= new StringWriter()
         def htmlBuilder= new MarkupBuilder(writer)
         def waveData= reader.executeQuery("server_match_wave_data", matchUUID)
@@ -21,7 +22,7 @@ public class Index extends Resource {
                 script(language:"javascript", type:"text/javascript", src:"js/jquery.js", '')
                 script(language:"javascript", type:"text/javascript", src:"js/jquery.flot.js", '')
                 script(language:"javascript") {
-                    mkp.yieldUnescaped '''
+                    mkp.yieldUnescaped """
     \$(function() {
         var options = {
             lines: {
@@ -44,7 +45,7 @@ public class Index extends Resource {
             }
 
             \$.ajax({
-                    url: "data.json",
+                    url: "data.json?matchuuid=$matchUUID",
                     type: "GET",
                     dataType: "json",
                     success: onDataReceived
@@ -62,15 +63,15 @@ public class Index extends Resource {
 					var x = item.datapoint[0].toFixed(2),
 						y = item.datapoint[1].toFixed(2);
 
-					$("#tooltip").html(y + "s")
+					\$("#tooltip").html(y + "s")
 						.css({top: item.pageY+5, left: item.pageX+5})
 						.fadeIn(200);
 				} else {
-					$("#tooltip").hide();
+					\$("#tooltip").hide();
 				}
 		});
       });
-'''
+"""
                 }
             }
             body() {
