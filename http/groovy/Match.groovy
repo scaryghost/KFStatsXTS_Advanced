@@ -64,7 +64,7 @@ body{height:100%;background:#fff;color:#1f1f1f;font-family:Arial,Verdana,sans-se
 ul, ol{list-style:none;}
 a {text-decoration: none;}
 .text-center {text-align: center; padding: 10px 0;}
-h2 {margin-bottom: 30px;}
+h1,h2 {margin-bottom: 30px;}
 .wrap {width: 653px; margin: 0 auto;}
 .clear {clear: both;}
 
@@ -90,6 +90,7 @@ tr.stats-row {text-align: right;}
                 def waves= wavePerks.collect(new TreeSet()){ it.wave }
                 def index= -1
 
+                h1(class:'text-center', "Match Information")
                 def summary= reader.executeQuery("server_match", matchUUID)
                 table(class:'heat-map') {
                     tbody() {
@@ -128,8 +129,13 @@ tr.stats-row {text-align: right;}
                     data.collect(new HashSet()){ it.category  }.each {category->
                         table(cellpadding:"0", cellspacing:"0", border:"0", class:"heat-map", id:"heat-map-${(++index)}") {
                             thead() {
+                                tr() {
+                                    th(colspan: perks.size() + 1) {
+                                        h3(category)
+                                    }
+                                }
                                 tr(class: 'stats-row') {
-                                    th(class:'first', category)
+                                    th(class:'first', 'Name')
                                     wavePerks.findAll{ it.wave == waveNum}.each {perk ->
                                         th(perk.name)
                                     }
