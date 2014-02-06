@@ -3,8 +3,4 @@
     <page name="index.html" script="Index.groovy" />
     <page name="match.html" script="Match.groovy" />
     <page name="data.json" script="Data.groovy" />
-    <page name="bubbledata.json" script="BubbleData.groovy" />
-    <page name="bubble.html" script="Bubble.groovy" />
-    <page name="datacsv.html" script="DataCSV.groovy" />
-    <page name="heatmap.html" script="HeatMap.groovy" />
 </webpages>
