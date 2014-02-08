@@ -1,0 +1,21 @@
+body,html,div,blockquote,img,label,p,h1,h2,h3,h4,h5,h6,pre,ul,ol,li,dl,dt,dd,form,a,fieldset,input,th,td{border:0;outline:none;margin:0;padding:0;}
+body{height:100%;background:#fff;color:#1f1f1f;font-family:Arial,Verdana,sans-serif;font-size:13px;padding:7px 0;}
+ul, ol{list-style:none;}
+a {text-decoration: none;}
+.text-center {text-align: center; padding: 10px 0;}
+h1,h2 {margin-bottom: 30px;}
+.wrap {width: 653px; margin: 0 auto;}
+.clear {clear: both;}
+
+/* Tutorial CSS */
+.heat-map {border: 1px solid #ccc; margin: 0 auto 20px auto; width: 650px;}
+.heat-map tr th {padding: 5px 7px; border-right: 1px solid #ccc; border-bottom: 1px solid #ccc; border-top: 1px solid #fff; border-left: 1px solid #fff; text-shadow: 0 1px 0 #fff; font: bold 11px Arial, sans-serif; text-transform: uppercase; color: #000;
+background-color: #F1F1F1;
+    background-image: -moz-linear-gradient(center top , #F9F9F9, #ECECEC);
+}
+.heat-map tr th.last {border-right: none;}
+.heat-map tr th.first, .heat-map tr td.stats-title {border-left: none; text-align: left;}
+.heat-map tr td {padding: 5px 7px; /*border-top: 1px solid #fff; border-right: 1px solid #fff; */ border-right: 1px solid #fff;border-bottom: 1px solid #fff;text-align right; color: #000; font-size: 11px;}
+tr.stats-row {text-align: right;}
+.heat-map tr.stats-row td.stats-title {text-align: left; color: #111; font-size: 13px; text-shadow: 0 1px 0 #fff; background: #efefef; border-top: 1px solid #fff; border-bottom: 1px solid #ccc;  border-right: 1px solid #ccc;}
+.heat-map tr.stats-row td.stats-title.last {border-bottom: 1px solid #fff;}

@@ -2,5 +2,6 @@
     <page name="" script="Index.groovy" />
     <page name="index.html" script="Index.groovy" />
     <page name="match.html" script="Match.groovy" />
+    <page name="playersession.html" script="PlayerSession.groovy" />
     <page name="data.json" script="Data.groovy" />
 </webpages>
