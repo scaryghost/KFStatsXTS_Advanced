@@ -68,10 +68,38 @@ public class DataReader {
     }
     @Query(name="server_match_player_data")
     public def queryPlayerSession(matchUUID) {
-        sql.rows("""select ps2.player_id as steamid64, c.name as category,s.name as statistic,ps.value from player_statistic ps 
+        sql.rows("""select ps2.player_id as steamid64, c.name as category,s.name as statistic,ps.value 
+                from player_statistic ps 
                 inner join player_session ps2 on ps2.id=ps.player_session_id 
                 inner join statistic s on s.id=ps.statistic_id 
                 inner join category c on c.id=s.category_id 
                 where ps.player_session_id in (select id from player_session ps2 where ps2.match_id=$matchUUID)""")
+    }
+    @Query(name="player_total_data")
+    public def queryPlayerData(steamid64) {
+        sql.rows("""select c.name as category, s.name as statistic,sum(ps.value) as value 
+                from player_statistic ps 
+                inner join statistic s on s.id=ps.statistic_id 
+                inner join category c on c.id=s.category_id 
+                where player_session_id in (select id from player_session ps2 where ps2.player_id=$steamid64) 
+                group by category, statistic;""")
+    }
+    @Query(name="player_info")
+    public def queryPlayerInfo(steamid64) {
+        sql.firstRow("""select * from player where id=$steamid64""")
+    }
+
+    @Query(name="player_totals")
+    public def queryPlayerTotals(steamid64) {
+        sql.firstRow("""select sum(ps.duration) as duration, 
+                sum(case when ps.disconnected=true then 1 else 0 end) as disconnects, 
+                sum(case when ps.finale_played=true then 1 else 0 end) as finales_played, 
+                sum(case when ps.finale_survived=true then 1 else 0 end) as finales_survived, 
+                sum(case when ps.disconnected=false and m.result=1 then 1 else 0 end) as wins, 
+                sum(case when ps.disconnected=false and m.result=-1 then 1 else 0 end) as losses, 
+                sum(case when ps.disconnected=false and m.result=0 then 1 else 0 end) as incomplete 
+                from player_session ps 
+                inner join match m on m.id=ps.match_id 
+                where ps.player_id=$steamid64;""")
     }
 }

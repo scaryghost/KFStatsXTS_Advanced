@@ -158,6 +158,6 @@ tr.stats-row {text-align: right;}
             }
         }
 
-        return String.format("<!DOCTYPE HTML>%s%n", writer)
+        return String.format("<!DOCTYPE HTML>%n%s", writer)
     }
 }
