@@ -102,4 +102,12 @@ public class DataReader {
                 inner join match m on m.id=ps.match_id 
                 where ps.player_id=$steamid64;""")
     }
+    @Query(name="server_total_data")
+    public def queryServerTotalData() {
+        sql.rows("""select c.name as category,s.name as statistic, sum(ps.value) as value 
+                from player_statistic ps 
+                inner join statistic s on s.id=ps.statistic_id 
+                inner join category c on c.id=s.category_id 
+                group by c.name,s.name""")
+    }
 }
