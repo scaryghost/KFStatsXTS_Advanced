@@ -110,4 +110,15 @@ public class DataReader {
                 inner join category c on c.id=s.category_id 
                 group by c.name,s.name""")
     }
+    @Query(name="server_wave_data")
+    public def queryServerWaveData(difficulty, length) {
+        sql.rows("""select c.name as category, s.name as statistic,ws.wave, 
+                (select name from statistic s where s.id=ws2.perk_id) as perk,sum(ws2.value) as value from match m 
+                inner join wave_summary ws on ws.match_id=m.id 
+                inner join wave_statistic ws2 on ws2.wave_summary_id=ws.id 
+                inner join statistic s on s.id=ws2.statistic_id 
+                inner join category c on c.id=s.category_id 
+                where m.setting_id in (select id from setting s where s.difficulty=$difficulty and s.length=$length) 
+                group by category,statistic,ws.wave,perk""")
+    }
 }

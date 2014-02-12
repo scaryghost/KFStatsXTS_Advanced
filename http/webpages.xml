@@ -5,4 +5,5 @@
     <page name="playersession.html" script="PlayerSession.groovy" />
     <page name="player.html" script="Player.groovy" />
     <page name="data.json" script="Data.groovy" />
+    <page name="wave.html" script="Wave.groovy" />
 </webpages>
