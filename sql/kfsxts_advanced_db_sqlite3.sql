@@ -20,13 +20,13 @@ CREATE TABLE map (
   name varchar(64) NOT NULL);
 CREATE TABLE match (
   id         varchar NOT NULL, 
-  setting_id smallint(5) NOT NULL, 
-  map_id     integer(10) NOT NULL, 
-  server_id  smallint(5) NOT NULL, 
-  wave       smallint(5), 
-  result     smallint(5), 
+  setting_id integer NOT NULL, 
+  map_id     integer NOT NULL, 
+  server_id  integer NOT NULL, 
+  wave       integer, 
+  result     integer, 
   timestamp  timestamp, 
-  duration   integer(10), 
+  duration   integer, 
   PRIMARY KEY (id), 
   FOREIGN KEY(setting_id) REFERENCES setting(id), 
   FOREIGN KEY(map_id) REFERENCES map(id), 
@@ -40,51 +40,51 @@ CREATE TABLE player_session (
   id               INTEGER NOT NULL PRIMARY KEY, 
   player_id       varchar(20) NOT NULL, 
   match_id        varchar NOT NULL, 
-  wave            smallint(5) NOT NULL, 
+  wave            integer NOT NULL, 
   timestamp       timestamp NOT NULL, 
-  duration        integer(10) NOT NULL, 
-  disconnected    integer(1) NOT NULL, 
-  finale_played   integer(1) NOT NULL, 
-  finale_survived integer(1) NOT NULL, 
+  duration        integer NOT NULL, 
+  disconnected    integer NOT NULL, 
+  finale_played   integer NOT NULL, 
+  finale_survived integer NOT NULL, 
   FOREIGN KEY(player_id) REFERENCES player(id), 
   FOREIGN KEY(match_id) REFERENCES match(id));
 CREATE TABLE wave_statistic  (
-  wave_summary_id integer(10) NOT NULL, 
-  statistic_id    smallint(5) NOT NULL, 
-  perk_id         smallint(5) NOT NULL, 
-  value           integer(10) NOT NULL, 
+  wave_summary_id integer NOT NULL, 
+  statistic_id    integer NOT NULL, 
+  perk_id         integer NOT NULL, 
+  value           integer NOT NULL, 
   FOREIGN KEY(statistic_id) REFERENCES statistic(id), 
   FOREIGN KEY(perk_id) REFERENCES statistic(id), 
   FOREIGN KEY(wave_summary_id) REFERENCES wave_summary(id));
 CREATE TABLE player_statistic (
-  statistic_id      smallint(5) NOT NULL, 
-  player_session_id integer(10) NOT NULL, 
-  value             integer(10) NOT NULL, 
+  statistic_id      integer NOT NULL, 
+  player_session_id integer NOT NULL, 
+  value             integer NOT NULL, 
   FOREIGN KEY(player_session_id) REFERENCES player_session(id), 
   FOREIGN KEY(statistic_id) REFERENCES statistic(id));
 CREATE TABLE statistic (
   id           INTEGER NOT NULL PRIMARY KEY, 
-  category_id smallint(5) NOT NULL, 
+  category_id integer NOT NULL, 
   name        varchar(32) NOT NULL, 
   FOREIGN KEY(category_id) REFERENCES category(id));
 CREATE TABLE server (
   id       INTEGER NOT NULL PRIMARY KEY, 
   address varchar(15) NOT NULL, 
-  port    smallint(5) NOT NULL);
+  port    integer;
 CREATE TABLE wave_summary (
   id        INTEGER NOT NULL PRIMARY KEY, 
   match_id varchar NOT NULL, 
-  wave     smallint(5) NOT NULL, 
-  survived integer(1), 
-  duration integer(10), 
+  wave     integer NOT NULL, 
+  survived integer, 
+  duration integer, 
   FOREIGN KEY(match_id) REFERENCES match(id));
 CREATE TABLE category (
   id    INTEGER NOT NULL PRIMARY KEY, 
   name varchar(32) NOT NULL UNIQUE);
 CREATE TABLE wave_summary_perk (
-  wave_summary_id integer(10) NOT NULL, 
-  perk_id         smallint(5) NOT NULL, 
-  count           integer(10), 
+  wave_summary_id integer NOT NULL, 
+  perk_id         integer NOT NULL, 
+  count           integer, 
   FOREIGN KEY(wave_summary_id) REFERENCES wave_summary(id), 
   FOREIGN KEY(perk_id) REFERENCES statistic(id));
 CREATE UNIQUE INDEX setting_index 
@@ -94,7 +94,7 @@ CREATE UNIQUE INDEX map_name
 CREATE UNIQUE INDEX player_id 
   ON player (id);
 CREATE UNIQUE INDEX player_session_index 
-  ON player_session (player_id, match_id, timestamp);
+  ON player_session (player_id, timestamp);
 CREATE UNIQUE INDEX wave_statistic_index 
   ON wave_statistic  (statistic_id, perk_id, wave_summary_id);
 CREATE UNIQUE INDEX player_statistic_index 

@@ -47,7 +47,7 @@ COMMENT ON COLUMN map.name IS 'Name of the level';
 CREATE TABLE match (
   id         uuid NOT NULL, 
   setting_id int2 NOT NULL, 
-  map_id     int4 NOT NULL, 
+  map_id     int2 NOT NULL, 
   server_id  int2 NOT NULL, 
   wave       int2, 
   result     int2, 
@@ -176,7 +176,7 @@ CREATE UNIQUE INDEX map_name
 CREATE UNIQUE INDEX player_id 
   ON player (id);
 CREATE UNIQUE INDEX player_session_index 
-  ON player_session (player_id, match_id, timestamp);
+  ON player_session (player_id, timestamp);
 CREATE UNIQUE INDEX wave_statistic_index 
   ON wave_statistic  (statistic_id, perk_id, wave_summary_id);
 CREATE UNIQUE INDEX player_statistic_index 

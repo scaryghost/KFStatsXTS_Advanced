@@ -1,4 +1,3 @@
-
 DELIMITER /
 DROP PROCEDURE IF EXISTS upsert_player/
 DROP PROCEDURE IF EXISTS insert_statistic/
@@ -43,21 +42,20 @@ DROP TABLE IF EXISTS server;
 DROP TABLE IF EXISTS wave_summary;
 DROP TABLE IF EXISTS category;
 DROP TABLE IF EXISTS wave_summary_perk;
-
 CREATE TABLE setting (
   id         smallint NOT NULL AUTO_INCREMENT comment 'Unique id for each game setting', 
   difficulty varchar(15) NOT NULL comment 'Difficulty setting of the game', 
   length     varchar(10) NOT NULL comment 'Length of the game', 
   PRIMARY KEY (id)) comment='Stores all used game settings';
 CREATE TABLE map (
-  id   int NOT NULL AUTO_INCREMENT comment 'Id of each level', 
-  name varchar(64) NOT NULL comment 'Name of the level', 
+  id   smallint NOT NULL AUTO_INCREMENT comment 'Id of each map', 
+  name varchar(64) NOT NULL comment 'Name of the map', 
   PRIMARY KEY (id), 
-  UNIQUE INDEX (name)) comment='Stores all played levels';
+  UNIQUE INDEX (name)) comment='Stores all played maps';
 CREATE TABLE `match` (
   id         varchar(36) NOT NULL comment 'Unique id for the match', 
   setting_id smallint NOT NULL comment 'Id of the match''s game settings', 
-  map_id     int NOT NULL comment 'Id of the level that was played', 
+  map_id     smallint NOT NULL comment 'Id of the map that was played', 
   server_id  smallint NOT NULL, 
   wave       smallint comment 'Wave reached', 
   result     smallint comment 'Result of the match: 1=win, -1=loss', 
@@ -85,11 +83,11 @@ CREATE TABLE wave_statistic  (
   wave_summary_id int NOT NULL comment 'Wave summary that this entry provides more details for', 
   statistic_id    smallint NOT NULL comment 'Id of the statistic', 
   perk_id         smallint NOT NULL comment 'Id of the perk this statistic describes', 
-  value           int NOT NULL comment 'Value of the data') comment='Statistics that are grouped on a wave by wave basis';
+  value           int NOT NULL comment='Statistics that are grouped on a wave by wave basis';
 CREATE TABLE player_statistic (
   statistic_id      smallint NOT NULL comment 'Id of the statistic', 
   player_session_id int NOT NULL comment 'Player''s session id the statistic is for', 
-  value             int NOT NULL comment 'Value of the statistic') comment='Stores the player statistics for each session';
+  value             int NOT NULL comment='Stores the player statistics for each session';
 CREATE TABLE statistic (
   id          smallint NOT NULL AUTO_INCREMENT, 
   category_id smallint NOT NULL comment 'Id of the category the statistic belongs to', 
@@ -114,7 +112,7 @@ CREATE TABLE category (
 CREATE TABLE wave_summary_perk (
   wave_summary_id int NOT NULL comment 'Wave summary that this entry provides perk information for', 
   perk_id         smallint NOT NULL comment 'Id of the perk', 
-  count           int comment 'Number of times the perk was selected') comment='Stores the perk counts for each wave';
+  count           int NOT NULL comment 'Stores the perk counts for each wave';
 ALTER TABLE `match` ADD INDEX FKmatch682879 (setting_id), ADD CONSTRAINT FKmatch682879 FOREIGN KEY (setting_id) REFERENCES setting (id);
 ALTER TABLE `match` ADD INDEX FKmatch598647 (map_id), ADD CONSTRAINT FKmatch598647 FOREIGN KEY (map_id) REFERENCES map (id);
 ALTER TABLE player_session ADD INDEX FKplayer_ses609271 (player_id), ADD CONSTRAINT FKplayer_ses609271 FOREIGN KEY (player_id) REFERENCES player (id);
@@ -132,7 +130,7 @@ ALTER TABLE wave_summary_perk ADD INDEX FKwave_summa968756 (perk_id), ADD CONSTR
 CREATE UNIQUE INDEX setting_index 
   ON setting (difficulty, length);
 CREATE UNIQUE INDEX player_session_index 
-  ON player_session (player_id, match_id, timestamp);
+  ON player_session (player_id, timestamp);
 CREATE UNIQUE INDEX wave_statistic_index 
   ON wave_statistic  (statistic_id, perk_id, wave_summary_id);
 CREATE UNIQUE INDEX player_statistic_index 
