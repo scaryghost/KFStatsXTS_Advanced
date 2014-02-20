@@ -121,4 +121,14 @@ public class DataReader {
                 where m.setting_id in (select id from setting s where s.difficulty=$difficulty and s.length=$length) 
                 group by category,statistic,ws.wave,perk""")
     }
+    @Query(name="server_wave_perks")
+    public def queryWavePErks(difficulty, length) {
+        sql.rows("""select ws.wave,s.name,sum(wsp.count) as count from wave_summary_perk wsp 
+                inner join wave_summary ws on wsp.wave_summary_id=ws.id 
+                inner join statistic s on s.id=wsp.perk_id 
+                inner join match m on m.id=ws.match_id 
+                inner join setting s2 on s2.id=m.setting_id 
+                where s2.length=$length and s2.difficulty=$difficulty 
+                group by ws.wave,s.name""")
+    }
 }
