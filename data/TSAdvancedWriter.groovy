@@ -107,13 +107,14 @@ public abstract class TSAdvancedWriter implements DataWriter {
                 insertMatch(state.uuid, state.difficulty, state.length, state.map, state.address, state.port)
                 state.createdMatchEntry= true
             }
-            insertPlayerSession(content.getSteamID64(), matchInfo, state.uuid, dateFormat.format(Calendar.getInstance().getTime()))
+            def time= dateFormat.format(Calendar.getInstance().getTime())
+            insertPlayerSession(content.getSteamID64(), matchInfo, state.uuid, time)
             content.getPackets().each {packet ->
                 packet.getStats().keySet().each {name ->
                     insertStatistic(packet.getCategory(), name)
                 }
             }
-            insertPlayerStatistic(content.getPackets(), content.getSteamID64(), state.uuid)
+            insertPlayerStatistic(content.getPackets(), content.getSteamID64(), state.uuid, time)
         }
     }
 
@@ -151,13 +152,13 @@ public abstract class TSAdvancedWriter implements DataWriter {
             [steamid64, uuid, info.wave, Sql.TIMESTAMP(time), info.duration, info.disconnected, 
             info.finalWave == 1, info.finalWaveSurvived == 1])
     }
-    protected void insertPlayerStatistic(packets, steamid64, uuid) {
+    protected void insertPlayerStatistic(packets, steamid64, uuid, time) {
         sql.withBatch("""insert into player_statistic (statistic_id, player_session_id, value) values (
                 (select id from statistic where category_id=(select id from category where name=?) and name=?),
-                (select id from player_session where player_id=? and match_id=?), ?)""") {ps ->
+                (select id from player_session where player_id=? and match_id=? and timestamp=?), ?)""") {ps ->
             packets.each {packet ->
                 packet.getStats().each {name, value ->
-                    ps.addBatch([packet.getCategory(), name, steamid64, uuid, value])
+                    ps.addBatch([packet.getCategory(), name, steamid64, uuid, Sql.TIMESTAMP(time), value])
                 }
             }
         }

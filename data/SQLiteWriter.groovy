@@ -48,7 +48,7 @@ public class SQLiteWriter extends TSAdvancedWriter {
     protected void insertPlayerSession(steamid64, info, uuid, time) {
         super.insertPlayerSession(steamid64, info, uuid.toString(), time)
     }
-    protected void insertPlayerStatistic(packets, steamid64, uuid) {
-        super.insertPlayerStatistic(packets, steamid64, uuid.toString())
+    protected void insertPlayerStatistic(packets, steamid64, uuid, time) {
+        super.insertPlayerStatistic(packets, steamid64, uuid.toString(), time)
     }
 }
