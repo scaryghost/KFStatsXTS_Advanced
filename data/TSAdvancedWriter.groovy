@@ -13,6 +13,7 @@ import java.util.TimeZone
 import java.util.UUID;
 
 public abstract class TSAdvancedWriter implements DataWriter {
+    protected final static def resultValues= [(Result.WIN): 1, (Result.LOSS): -1, (Result.INCOMPLETE): 0]
     protected final def matchStates, dateFormat, sql, perksCategory= "perks"
 
     protected static class State {
@@ -58,7 +59,7 @@ public abstract class TSAdvancedWriter implements DataWriter {
                     break
                 case "result":
                     def packetAttrs= packet.getAttributes()
-                    def result= packetAttrs.result == Result.WIN ? 1 : -1
+                    def result= resultValues[packetAttrs.result]
 
                     updateMatch(packet.getWave(), result, dateFormat.format(Calendar.getInstance().getTime()), 
                             packetAttrs.duration, state.uuid)
