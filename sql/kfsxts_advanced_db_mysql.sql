@@ -59,7 +59,7 @@ CREATE TABLE `match` (
   server_id  smallint NOT NULL, 
   wave       smallint comment 'Wave reached', 
   result     smallint comment 'Result of the match: 1=win, -1=loss', 
-  timestamp  timestamp NULL comment 'Date and time the match ended', 
+  time_end   timestamp NULL comment 'Date and time the match ended', 
   duration   int comment 'How long the match lasted', 
   PRIMARY KEY (id)) comment='Contains data on each match that was played';
 CREATE TABLE player (
@@ -73,7 +73,7 @@ CREATE TABLE player_session (
   player_id       varchar(20) NOT NULL comment 'Player''s id', 
   match_id        varchar(36) NOT NULL comment 'Id of the match the player was a part of', 
   wave            smallint NOT NULL comment 'Wave the match was on when the player ended his session', 
-  timestamp       timestamp NOT NULL comment 'Date and time the player ended his session', 
+  time_end        timestamp NOT NULL comment 'Date and time the player ended his session', 
   duration        int NOT NULL comment 'How long the player''s session lasted', 
   disconnected    bit(1) NOT NULL comment 'True if the player left before the match ended', 
   finale_played   bit(1) NOT NULL comment 'True if the player participated in the patriarch battle', 
@@ -104,6 +104,7 @@ CREATE TABLE wave_summary (
   wave     smallint NOT NULL comment 'Wave the entry is describing', 
   survived bit(1) comment 'True if the team survived the wave', 
   duration int comment 'How long the wave took to complete', 
+  time_end timestamp NULL comment 'Date and time the wave ended', 
   PRIMARY KEY (id)) comment='Summary of the results of the specific wave';
 CREATE TABLE category (
   id   smallint NOT NULL AUTO_INCREMENT comment 'Id of the category', 
@@ -112,7 +113,7 @@ CREATE TABLE category (
 CREATE TABLE wave_summary_perk (
   wave_summary_id int NOT NULL comment 'Wave summary that this entry provides perk information for', 
   perk_id         smallint NOT NULL comment 'Id of the perk', 
-  count           int NOT NULL comment 'Stores the perk counts for each wave';
+  count           int NOT NULL comment='Stores the perk counts for each wave';
 ALTER TABLE `match` ADD INDEX FKmatch682879 (setting_id), ADD CONSTRAINT FKmatch682879 FOREIGN KEY (setting_id) REFERENCES setting (id);
 ALTER TABLE `match` ADD INDEX FKmatch598647 (map_id), ADD CONSTRAINT FKmatch598647 FOREIGN KEY (map_id) REFERENCES map (id);
 ALTER TABLE player_session ADD INDEX FKplayer_ses609271 (player_id), ADD CONSTRAINT FKplayer_ses609271 FOREIGN KEY (player_id) REFERENCES player (id);
@@ -130,7 +131,7 @@ ALTER TABLE wave_summary_perk ADD INDEX FKwave_summa968756 (perk_id), ADD CONSTR
 CREATE UNIQUE INDEX setting_index 
   ON setting (difficulty, length);
 CREATE UNIQUE INDEX player_session_index 
-  ON player_session (player_id, timestamp);
+  ON player_session (player_id, time_end);
 CREATE UNIQUE INDEX wave_statistic_index 
   ON wave_statistic  (statistic_id, perk_id, wave_summary_id);
 CREATE UNIQUE INDEX player_statistic_index 
@@ -176,10 +177,10 @@ BEGIN
 END/
 DELIMITER ;
 DELIMITER /
-CREATE PROCEDURE upsert_wave_summary(new_match_id varchar(36), new_wave smallint, was_survived bit, wave_duration int)
+CREATE PROCEDURE upsert_wave_summary(new_match_id varchar(36), new_wave smallint, was_survived bit, wave_duration int, wave_time_end timestamp)
 BEGIN
-    INSERT INTO wave_summary(match_id, wave, survived, duration) VALUES (
-            new_match_id, new_wave, was_survived, wave_duration) ON DUPLICATE KEY UPDATE
-            survived=was_survived, duration=wave_duration;
+    INSERT INTO wave_summary(match_id, wave, survived, duration, time_end) VALUES (
+            new_match_id, new_wave, was_survived, wave_duration, wave_time_end) ON DUPLICATE KEY UPDATE
+            survived=was_survived, duration=wave_duration, time_end=wave_time_end;
 END/
 DELIMITER ;

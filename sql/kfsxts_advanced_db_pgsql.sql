@@ -1,7 +1,7 @@
 DROP FUNCTION IF EXISTS upsert_player(varchar,varchar,varchar);
 DROP FUNCTION IF EXISTS insert_statistic(varchar,varchar);
 DROP FUNCTION IF EXISTS insert_match(uuid,varchar,varchar,varchar,varchar,int2);
-DROP FUNCTION IF EXISTS upsert_wave_summary(uuid,int2,bool,int4);
+DROP FUNCTION IF EXISTS upsert_wave_summary(uuid,int2,bool,int4,timestamp);
 ALTER TABLE match DROP CONSTRAINT FKmatch682879;
 ALTER TABLE match DROP CONSTRAINT FKmatch598647;
 ALTER TABLE player_session DROP CONSTRAINT FKplayer_ses609271;
@@ -41,9 +41,9 @@ CREATE TABLE map (
   id    SERIAL NOT NULL, 
   name varchar(64) NOT NULL, 
   PRIMARY KEY (id));
-COMMENT ON TABLE map IS 'Stores all played levels';
-COMMENT ON COLUMN map.id IS 'Id of each level';
-COMMENT ON COLUMN map.name IS 'Name of the level';
+COMMENT ON TABLE map IS 'Stores all played maps';
+COMMENT ON COLUMN map.id IS 'Id of each map';
+COMMENT ON COLUMN map.name IS 'Name of the map';
 CREATE TABLE match (
   id         uuid NOT NULL, 
   setting_id int2 NOT NULL, 
@@ -51,16 +51,16 @@ CREATE TABLE match (
   server_id  int2 NOT NULL, 
   wave       int2, 
   result     int2, 
-  timestamp  timestamp, 
+  time_end   timestamp, 
   duration   int4, 
   PRIMARY KEY (id));
 COMMENT ON TABLE match IS 'Contains data on each match that was played';
 COMMENT ON COLUMN match.id IS 'Unique id for the match';
 COMMENT ON COLUMN match.setting_id IS 'Id of the match''s game settings';
-COMMENT ON COLUMN match.map_id IS 'Id of the level that was played';
+COMMENT ON COLUMN match.map_id IS 'Id of the map that was played';
 COMMENT ON COLUMN match.wave IS 'Wave reached';
 COMMENT ON COLUMN match.result IS 'Result of the match: 1=win, -1=loss';
-COMMENT ON COLUMN match.timestamp IS 'Date and time the match ended';
+COMMENT ON COLUMN match.time_end IS 'Date and time the match ended';
 COMMENT ON COLUMN match.duration IS 'How long the match lasted';
 CREATE TABLE player (
   id     varchar(20) NOT NULL, 
@@ -76,7 +76,7 @@ CREATE TABLE player_session (
   player_id       varchar(20) NOT NULL, 
   match_id        uuid NOT NULL, 
   wave            int2 NOT NULL, 
-  timestamp       timestamp NOT NULL, 
+  time_end        timestamp NOT NULL, 
   duration        int4 NOT NULL, 
   disconnected    bool NOT NULL, 
   finale_played   bool NOT NULL, 
@@ -87,7 +87,7 @@ COMMENT ON COLUMN player_session.id IS 'Unique id for each player''s session';
 COMMENT ON COLUMN player_session.player_id IS 'Player''s id';
 COMMENT ON COLUMN player_session.match_id IS 'Id of the match the player was a part of';
 COMMENT ON COLUMN player_session.wave IS 'Wave the match was on when the player ended his session';
-COMMENT ON COLUMN player_session.timestamp IS 'Date and time the player ended his session';
+COMMENT ON COLUMN player_session.time_end IS 'Date and time the player ended his session';
 COMMENT ON COLUMN player_session.duration IS 'How long the player''s session lasted';
 COMMENT ON COLUMN player_session.disconnected IS 'True if the player left before the match ended';
 COMMENT ON COLUMN player_session.finale_played IS 'True if the player participated in the patriarch battle';
@@ -133,6 +133,7 @@ CREATE TABLE wave_summary (
   wave     int2 NOT NULL, 
   survived bool, 
   duration int4, 
+  time_end timestamp, 
   PRIMARY KEY (id));
 COMMENT ON TABLE wave_summary IS 'Summary of the results of the specific wave';
 COMMENT ON COLUMN wave_summary.id IS 'Unique ID for the wave summary';
@@ -140,6 +141,7 @@ COMMENT ON COLUMN wave_summary.match_id IS 'ID of the match the summary is descr
 COMMENT ON COLUMN wave_summary.wave IS 'Wave the entry is describing';
 COMMENT ON COLUMN wave_summary.survived IS 'True if the team survived the wave';
 COMMENT ON COLUMN wave_summary.duration IS 'How long the wave took to complete';
+COMMENT ON COLUMN wave_summary.time_end IS 'Date and time the wave ended';
 CREATE TABLE category (
   id    SERIAL NOT NULL, 
   name varchar(32) NOT NULL UNIQUE, 
@@ -176,7 +178,7 @@ CREATE UNIQUE INDEX map_name
 CREATE UNIQUE INDEX player_id 
   ON player (id);
 CREATE UNIQUE INDEX player_session_index 
-  ON player_session (player_id, timestamp);
+  ON player_session (player_id, time_end);
 CREATE UNIQUE INDEX wave_statistic_index 
   ON wave_statistic  (statistic_id, perk_id, wave_summary_id);
 CREATE UNIQUE INDEX player_statistic_index 
@@ -240,15 +242,15 @@ BEGIN
     
 END; $$
 LANGUAGE plpgsql;
-CREATE FUNCTION upsert_wave_summary(new_match_id uuid, new_wave int2, was_survived bool, wave_duration int4) RETURNS VOID AS $$
+CREATE FUNCTION upsert_wave_summary(new_match_id uuid, new_wave int2, was_survived bool, wave_duration int4, wave_time_end timestamp) RETURNS VOID AS $$
 BEGIN
     LOOP
-        UPDATE wave_summary SET survived=was_survived, duration=wave_duration WHERE match_id=new_match_id AND wave=new_wave;
+        UPDATE wave_summary SET survived=was_survived,duration=wave_duration,time_end=wave_time_end WHERE match_id=new_match_id AND wave=new_wave;
         IF found THEN
             RETURN;
         END IF;
         BEGIN
-            INSERT INTO wave_summary(match_id, wave, survived, duration) VALUES (new_match_id, new_wave, was_survived, wave_duration);
+            INSERT INTO wave_summary(match_id, wave, survived, duration,time_end) VALUES (new_match_id, new_wave, was_survived, wave_duration,wave_time_end);
             RETURN;
         EXCEPTION WHEN unique_violation THEN
         END;

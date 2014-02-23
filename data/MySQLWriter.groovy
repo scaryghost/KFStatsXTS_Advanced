@@ -12,8 +12,8 @@ public class MySQLWriter extends StoredProcedureWriter {
     protected void insertWaveStatistics(uuid, wave, type, perk, stats) {
         super.insertWaveStatistics(uuid.toString(), wave, type, perk, stats)
     }
-    protected void upsertWaveSummary(uuid, wave, completed, duration) {
-        super.upsertWaveSummary(uuid.toString(), wave, completed, duration)
+    protected void upsertWaveSummary(uuid, wave, completed, duration, time) {
+        super.upsertWaveSummary(uuid.toString(), wave, completed, duration, time)
     }
     protected void insertWaveSummary(uuid, wave) {
         super.insertWaveSummary(uuid.toString(), wave)

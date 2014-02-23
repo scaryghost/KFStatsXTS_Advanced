@@ -25,7 +25,7 @@ CREATE TABLE match (
   server_id  integer NOT NULL, 
   wave       integer, 
   result     integer, 
-  timestamp  timestamp, 
+  time_end   timestamp, 
   duration   integer, 
   PRIMARY KEY (id), 
   FOREIGN KEY(setting_id) REFERENCES setting(id), 
@@ -41,7 +41,7 @@ CREATE TABLE player_session (
   player_id       varchar(20) NOT NULL, 
   match_id        varchar NOT NULL, 
   wave            integer NOT NULL, 
-  timestamp       timestamp NOT NULL, 
+  time_end        timestamp NOT NULL, 
   duration        integer NOT NULL, 
   disconnected    integer NOT NULL, 
   finale_played   integer NOT NULL, 
@@ -77,6 +77,7 @@ CREATE TABLE wave_summary (
   wave     integer NOT NULL, 
   survived integer, 
   duration integer, 
+  time_end timestamp, 
   FOREIGN KEY(match_id) REFERENCES match(id));
 CREATE TABLE category (
   id    INTEGER NOT NULL PRIMARY KEY, 
@@ -94,7 +95,7 @@ CREATE UNIQUE INDEX map_name
 CREATE UNIQUE INDEX player_id 
   ON player (id);
 CREATE UNIQUE INDEX player_session_index 
-  ON player_session (player_id, timestamp);
+  ON player_session (player_id, time_end);
 CREATE UNIQUE INDEX wave_statistic_index 
   ON wave_statistic  (statistic_id, perk_id, wave_summary_id);
 CREATE UNIQUE INDEX player_statistic_index 

@@ -73,7 +73,8 @@ public abstract class TSAdvancedWriter implements DataWriter {
                                 state.createdMatchEntry= true
                             }
                             state.lastWave= packet.getWave()
-                            upsertWaveSummary(state.uuid, packet.getWave(), attrs.completed, attrs.duration)
+                            def time= dateFormat.format(Calendar.getInstance().getTime())
+                            upsertWaveSummary(state.uuid, packet.getWave(), attrs.completed, attrs.duration, time)
                             packet.getStats().each {stat, count ->
                                 insertStatistic(perksCategory, stat)
                                 insertWaveSummaryPerk(state.uuid, packet.getWave(), stat, count)
@@ -140,15 +141,15 @@ public abstract class TSAdvancedWriter implements DataWriter {
         sql.execute("insert into wave_summary(match_id, wave) values (?,?)", [uuid, wave])
     }
     protected abstract void upsertPlayer(info)
-    protected abstract void upsertWaveSummary(uuid, wave, completed, duration)
+    protected abstract void upsertWaveSummary(uuid, wave, completed, duration, time)
     protected abstract void insertMatch(uuid, difficulty, length, map, address, port)
     protected void updateMatch(wave, result, time, duration, uuid) {
-        sql.execute("update match set wave=?, result=?, timestamp=?, duration=? where id=?", 
+        sql.execute("update match set wave=?, result=?, time_end=?, duration=? where id=?", 
                 [wave, result, Sql.TIMESTAMP(time), duration, uuid])
     }
     protected abstract void insertStatistic(category, name)
     protected void insertPlayerSession(steamid64, info, uuid, time) {
-        sql.execute("""insert into player_session (player_id, match_id, wave, timestamp, duration, disconnected, finale_played, finale_survived) 
+        sql.execute("""insert into player_session (player_id, match_id, wave, time_end, duration, disconnected, finale_played, finale_survived) 
             values (?, ?, ?, ?, ?, ?, ?, ?)""", 
             [steamid64, uuid, info.wave, Sql.TIMESTAMP(time), info.duration, info.disconnected, 
             info.finalWave == 1, info.finalWaveSurvived == 1])
@@ -156,7 +157,7 @@ public abstract class TSAdvancedWriter implements DataWriter {
     protected void insertPlayerStatistic(packets, steamid64, uuid, time) {
         sql.withBatch("""insert into player_statistic (statistic_id, player_session_id, value) values (
                 (select id from statistic where category_id=(select id from category where name=?) and name=?),
-                (select id from player_session where player_id=? and match_id=? and timestamp=?), ?)""") {ps ->
+                (select id from player_session where player_id=? and match_id=? and time_end=?), ?)""") {ps ->
             packets.each {packet ->
                 packet.getStats().each {name, value ->
                     ps.addBatch([packet.getCategory(), name, steamid64, uuid, Sql.TIMESTAMP(time), value])
