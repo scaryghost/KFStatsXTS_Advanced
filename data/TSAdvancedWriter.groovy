@@ -73,8 +73,12 @@ public abstract class TSAdvancedWriter implements DataWriter {
                                 state.createdMatchEntry= true
                             }
                             state.lastWave= packet.getWave()
-                            def time= dateFormat.format(Calendar.getInstance().getTime())
-                            upsertWaveSummary(state.uuid, packet.getWave(), attrs.completed, attrs.duration, time)
+                            if (attrs.duration < 0) {
+                                upsertWaveSummary(state.uuid, packet.getWave(), null, null, null)
+                            } else {
+                                def time= dateFormat.format(Calendar.getInstance().getTime())
+                                upsertWaveSummary(state.uuid, packet.getWave(), attrs.completed, attrs.duration, time)
+                            }
                             packet.getStats().each {stat, count ->
                                 insertStatistic(perksCategory, stat)
                                 insertWaveSummaryPerk(state.uuid, packet.getWave(), stat, count)

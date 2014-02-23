@@ -22,7 +22,7 @@ public class SQLiteWriter extends TSAdvancedWriter {
         sql.execute("insert or ignore into wave_summary(match_id, wave) values (?, ?)", 
                 [uuid.toString(), wave])
         sql.execute("update wave_summary set survived=?,duration=?,time_end=? where id=? and wave=?", 
-                [completed, duration, time, uuid.toString(), wave])
+                [completed, duration, Sql.TIMESTAMP(time), uuid.toString(), wave])
     }
     protected void insertMatch(uuid, difficulty, length, map, address, port) {
         sql.execute("insert or ignore into setting(difficulty, length) values (?, ?)", 
