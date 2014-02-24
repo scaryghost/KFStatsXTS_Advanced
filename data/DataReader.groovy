@@ -60,6 +60,12 @@ public class DataReader {
                 inner join statistic s on s.id=wsp.perk_id 
                 where ws.match_id=${matchUUID}""")
     }
+    @Query(name="server_match_wave_times")
+    public def queryMatchWaveTimes(matchUUID) {
+        sql.rows("""select wave,extract (epoch from (time_end - (ws.duration * '1 seconds'::interval))) * 1000 as time_begin,
+                extract (epoch from time_end) * 1000 as time_end from wave_summary ws 
+                where ws.match_id=$matchUUID;""")
+    }
     @Query(name="server_match_players")
     public def queryMatchPlayers(matchUUID) {
         sql.rows("""select ps.player_id as steamid64,p.name from player_session ps 

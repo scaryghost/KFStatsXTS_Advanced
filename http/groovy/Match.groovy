@@ -13,6 +13,7 @@ public class Match extends Resource {
                 meta('http-equiv':"Content-Type", content:"text/html; charset=utf-8")
                 title('Bubble Chart Example')
                 script(type:'text/javascript', src:'//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js', '')
+                script(type:'text/javascript', src:'https://www.google.com/jsapi?autoload={"modules":[{"name":"visualization","version":"1"}]}', '')
                 script(type:'text/javascript') {
                     mkp.yieldUnescaped """
     function colorCells(tableId) {
@@ -57,6 +58,27 @@ public class Match extends Resource {
         });
 });"""
                 }
+                script(type:'text/javascript') {
+                    mkp.yieldUnescaped """
+    function visualizationCallback() {
+        var divId="timeline";
+        var data = new google.visualization.DataTable(\$.ajax({url: "data.json?matchuuid=${queries.matchuuid}", dataType:"json", async: false}).responseText);
+        
+        var chart= new google.visualization.ChartWrapper({'chartType': 'Timeline', 'containerId': divId, 'options': {
+                'chartArea': {height: '90%'},
+                'vAxis': {title: 'Name', titleTextStyle: {color: 'red'}, textStyle: {fontSize: 15}},
+                'hAxis': {title: 'Frequency', titleTextStyle: {color: 'red'}},
+                'allowHtml': true,
+                'title': 'Match Timeline',
+                'height': document.getElementById(divId).offsetHeight * 0.925,
+                'width': document.getElementById(divId).offsetWidth * 0.985
+        }});
+        chart.setDataTable(data);
+        chart.draw();
+    }
+    google.setOnLoadCallback(visualizationCallback);
+"""
+                }
                 style(type:'text/css') {
                     mkp.yieldUnescaped """
     body,html,div,blockquote,img,label,p,h1,h2,h3,h4,h5,h6,pre,ul,ol,li,dl,dt,dd,form,a,fieldset,input,th,td{border:0;outline:none;margin:0;padding:0;}
@@ -91,6 +113,7 @@ tr.stats-row {text-align: right;}
                 def index= -1
 
                 h1(class:'text-center', "Match Information")
+                div(id:"timeline", style:"width: 1024px; height: 200px; margin-left: auto; margin-right: auto;", '')
                 def summary= reader.executeQuery("server_match", matchUUID)
                 table(class:'heat-map') {
                     tbody() {
