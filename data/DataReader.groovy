@@ -16,7 +16,8 @@ public class DataReader {
                 inner join statistic s on ws.statistic_id=s.id 
                 inner join wave_summary ws2 on ws2.id=ws.wave_summary_id 
                 inner join match m on m.id=ws2.match_id 
-                where ws.statistic_id in (select id from statistic s where s.category_id=(select id from category c where c.name='weapons')) and 
+                where ws.statistic_id in (select id from statistic s where s.category_id=(select id from category c 
+                where c.name='weapons')) and 
                 m.setting_id=(select id from setting s2 where s2.difficulty=$difficulty and s2.length=$length) 
                 order by m.timestamp ASC,ws2.wave ASC,ws.value DESC""") {
         }
@@ -28,13 +29,15 @@ public class DataReader {
                 inner join statistic s on ps.statistic_id=s.id 
                 inner join player_session ps2 on ps2.id=ps.player_session_id 
                 inner join match m on m.id=ps2.match_id 
-                where ps.statistic_id in (select id from statistic s where s.category_id=(select id from category c where c.name=$category)) 
+                where ps.statistic_id in (select id from statistic s where s.category_id=(select id from category c 
+                where c.name=$category)) 
                 order by m.timestamp ASC,ps.value DESC""")
     }
     @Query(name="server_match")
     public def queryMatch(matchUUID) {
-        return sql.firstRow("""select (select count(*) from player_session ps where ps.match_id=m.id) as num_players,
-                s2.address,s2.port,s.difficulty,s.length,m2.name,m.wave,m.result from match m 
+        return sql.firstRow("""select (select count(*) from player_session ps where ps.match_id=m.id) as player_count,
+                concat(s2.address,':',s2.port) as server,concat(s.difficulty,', ',s.length) as setting,
+                m2.name as map,m.wave,m.result,m.time_end,m.duration from match m 
                 inner join setting s on s.id=m.setting_id 
                 inner join map m2 on m2.id=m.map_id 
                 inner join server s2 on s2.id=m.server_id
