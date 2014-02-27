@@ -134,4 +134,16 @@ public class DataReader {
                 where s2.length=$length and s2.difficulty=$difficulty 
                 group by ws.wave,s.name""")
     }
+    @Query(name="server_list")
+    public def queryServerList() {
+        sql.rows("select concat(s.address, ':', s.port) as address_port from server s")
+    }
+    @Query(name="server_settings")
+    public def queryServerSettings() {
+        sql.rows("select concat(s.difficulty, ', ', s.length) as difficulty_length from setting s")
+    }
+    @Query(name="server_maps")
+    public def queryServerMaps() {
+        sql.rows("select m.name from map m")
+    }
 }

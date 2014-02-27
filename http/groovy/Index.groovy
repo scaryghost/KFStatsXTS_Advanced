@@ -4,12 +4,42 @@ import groovy.xml.MarkupBuilder
 public class Index extends WebPage {
     public Index() {
         pageTitle= "KFStatsX Home"
-        cssSrcs << 'css/heatmap.css'
-        jsSrcs << 'js/heatmap.js'
+        cssSrcs << 'css/heatmap.css' << 'css/menu.css'
+        jsSrcs << 'js/heatmap.js' << 'js/menu.js'
     }
     protected void fillBody(builder) {
         def data= reader.executeQuery("server_total_data")
 
+        builder.div(style: "float: left;", id:'example1') {
+            h4() {
+                mkp.yieldUnescaped 'Filters'
+                a(class:'expand_all') {
+                    img(src:'images/expand.gif', alt: '')
+                }
+                a(class:'collapse_all') {
+                    img(src:'images/collapse.gif', alt:'')
+                }
+            }
+            ul(id:'menu1', class:'example_menu') {
+                [['Server', 'server_list', 'address_port'], ['Setting', 'server_settings', 'difficulty_length'], 
+                        ['Map', 'server_maps', 'name']].each{ header, queryName, colName ->
+                    li() {
+                        a(class:'expanded', header)
+                        ul() {
+                            reader.executeQuery(queryName).each {row ->
+                                li() {
+                                    input(type:"checkbox", name:header.toLowerCase(), value:row[colName])
+                                    mkp.yieldUnescaped row[colName]
+                                }
+                            }
+                        }
+                    }
+                    li(class: 'footer') {
+                        span(' ')
+                    }
+                }
+            }
+        }
         data.collect(new HashSet()){ it.category }.each {category ->
             builder.table(cellpadding:"0", cellspacing:"0", border:"0", class:"heat-map") {
                 thead() {
