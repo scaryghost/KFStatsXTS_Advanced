@@ -146,4 +146,16 @@ public class DataReader {
     public def queryServerMaps() {
         sql.rows("select m.name from map m")
     }
+    @Query(name="server_filtered_total_data")
+    public def queryServerTotalData(category, value) {
+        sql.rows("""select c.name as category,s.name as statistic, sum(ps.value) as value 
+                from player_statistic ps 
+                inner join statistic s on s.id=ps.statistic_id 
+                inner join category c on c.id=s.category_id 
+                inner join player_session ps2 on ps2.id=ps.player_session_id 
+                inner join match m on m.id=ps2.match_id 
+                inner join map m2 on m2.id=m.map_id 
+                where m2.name=$value 
+                group by c.name,s.name""")
+    }
 }

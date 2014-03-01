@@ -1,7 +1,7 @@
 body {
     font: 10pt Arial, Helvetica, Sans-serif;
 }
-a {
+p {
     text-decoration: none;
 }
 #example1 {
@@ -37,11 +37,11 @@ a {
 .example_menu ul ul {
     display: block;
 }
-.example_menu ul ul li a {
+.example_menu ul ul li p {
     padding-left: 20px;
     width: 109px;
 }
-.example_menu a {
+.example_menu p {
     color: #000;
     cursor: pointer;
     display: block;
@@ -50,16 +50,16 @@ a {
     padding: 2px 2px 2px 17px;
     width: 112px;
 }
-.example_menu a.expanded {
-    background: #bbb url('images/collapse.gif') no-repeat 3px 50%;
+.example_menu p.expanded {
+    background: #bbb url('../images/collapse.gif') no-repeat 3px 50%;
 }
-.example_menu a.collapsed {
-    background: #bbb url('images/expand.gif') no-repeat 3px 50%;
+.example_menu p.collapsed {
+    background: #bbb url('../images/expand.gif') no-repeat 3px 50%;
 }
-.example_menu a:hover {
+.example_menu p:hover {
     text-decoration: none;
 }
-.example_menu ul a {
+.example_menu ul p {
     background: #e8e8e8;
     border-top: 2px solid #fff;
     color: #000;
@@ -68,22 +68,22 @@ a {
     padding: 2px 2px 2px 10px;
     width: 119px;
 }
-.example_menu ul a:link {
+.example_menu ul p:link {
     font-weight: normal;
 }
-.example_menu ul a:hover {
+.example_menu ul p:hover {
     background : #f5f5f5;
     text-decoration: underline;
 }
-.example_menu li.active a {
+.example_menu li.active p {
     background: #fff;
 }
-.example_menu li.active li a {
+.example_menu li.active li p {
     background: #e8e8e8;
 }
 #menu1 li.footer,
 .example_menu .footer {
-    background: transparent url('images/footer.jpg') no-repeat 0 0;
+    background: transparent url('../images/footer.jpg') no-repeat 0 0;
     border-top: 2px solid #fff;
     height: 9px;
     line-height: 15px;

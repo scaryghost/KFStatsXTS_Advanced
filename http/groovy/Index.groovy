@@ -20,16 +20,22 @@ public class Index extends WebPage {
                     img(src:'images/collapse.gif', alt:'')
                 }
             }
+            form() {
+            def inputId= -1
             ul(id:'menu1', class:'example_menu') {
                 [['Server', 'server_list', 'address_port'], ['Setting', 'server_settings', 'difficulty_length'], 
                         ['Map', 'server_maps', 'name']].each{ header, queryName, colName ->
                     li() {
-                        a(class:'expanded', header)
+                        p(class:'expanded', header)
                         ul() {
                             reader.executeQuery(queryName).each {row ->
                                 li() {
-                                    input(type:"checkbox", name:header.toLowerCase(), value:row[colName])
-                                    mkp.yieldUnescaped row[colName]
+                                    p() {
+                                        input(type:"checkbox", name:header.toLowerCase(), value:row[colName], 
+                                                onchange:"updateFilter(this.name, this.value)", 
+                                                style: 'margin-right:5px;', id: "input_${++inputId}")
+                                        label(for:"input_$inputId", row[colName])
+                                    }
                                 }
                             }
                         }
@@ -39,7 +45,10 @@ public class Index extends WebPage {
                     }
                 }
             }
+            }
         }
+        builder.div(id: 'content', '')
+/*
         data.collect(new HashSet()){ it.category }.each {category ->
             builder.table(cellpadding:"0", cellspacing:"0", border:"0", class:"heat-map") {
                 thead() {
@@ -63,6 +72,7 @@ public class Index extends WebPage {
                 }
             }
         }
+*/
     }
 
 }
