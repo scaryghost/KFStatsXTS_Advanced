@@ -138,9 +138,13 @@ public class DataReader {
     public def queryServerList() {
         sql.rows("select concat(s.address, ':', s.port) as address_port from server s")
     }
-    @Query(name="server_settings")
-    public def queryServerSettings() {
-        sql.rows("select concat(s.difficulty, ', ', s.length) as difficulty_length from setting s")
+    @Query(name="server_difficulties")
+    public def queryServerDifficulties() {
+        sql.rows("select s.difficulty from setting s group by s.difficulty")
+    }
+    @Query(name="server_lengths")
+    public def queryServerLengths() {
+        sql.rows("select s.length from setting s group by s.length")
     }
     @Query(name="server_maps")
     public def queryServerMaps() {

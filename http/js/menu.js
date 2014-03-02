@@ -14,6 +14,7 @@ $(document).ready(function() {
     }, 250);
 });
 
+var filters= {};
 function updateFilter(category, value) {
     if (value == "") {
         document.getElementById("txtHint").innerHTML="";
@@ -25,11 +26,27 @@ function updateFilter(category, value) {
     } else {// code for IE6, IE5
         xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
     }
+    if (!(category in filters)) {
+        filters[category]= {};
+    }
+    if (value in filters[category]) {
+        delete filters[category][value];
+    } else {
+        filters[category][value]= 1;
+    }
+    var queries= [];
+    for(var catIt in filters) {
+        var values= [];
+        for(var valIt in filters[catIt]) {
+            values.push(valIt);
+        }
+        queries.push(catIt + "=" + values.join(","));
+    }
     xmlhttp.onreadystatechange=function() {
         if (xmlhttp.readyState==4 && xmlhttp.status==200) {
             document.getElementById("content").innerHTML=xmlhttp.responseText;
         }
     }
-    xmlhttp.open("POST","IndexContent.html?category=" + category + "&value=" + value,true);
+    xmlhttp.open("POST","IndexContent.html?" + queries.join("&"),true);
     xmlhttp.send();
 }

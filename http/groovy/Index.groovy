@@ -23,8 +23,8 @@ public class Index extends WebPage {
             form() {
             def inputId= -1
             ul(id:'menu1', class:'example_menu') {
-                [['Server', 'server_list', 'address_port'], ['Setting', 'server_settings', 'difficulty_length'], 
-                        ['Map', 'server_maps', 'name']].each{ header, queryName, colName ->
+                [['Server', 'server_list', 'address_port'], ['Difficulty', 'server_difficulties', 'difficulty'], 
+                        ['Length', 'server_lengths', 'length'], ['Map', 'server_maps', 'name']].each{ header, queryName, colName ->
                     li() {
                         p(class:'expanded', header)
                         ul() {
