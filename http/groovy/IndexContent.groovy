@@ -3,7 +3,7 @@ import groovy.xml.MarkupBuilder
 
 public class WebPage extends Resource {
     public String generatePage() {
-        def data= reader.executeQuery("server_filtered_total_data", queries.category, queries.value)
+        def data= reader.executeQuery("server_filtered_total_data", queries)
         def writer= new StringWriter()
         def builder= new MarkupBuilder(writer)
 

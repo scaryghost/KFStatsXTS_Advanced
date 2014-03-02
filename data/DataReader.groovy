@@ -151,15 +151,57 @@ public class DataReader {
         sql.rows("select m.name from map m")
     }
     @Query(name="server_filtered_total_data")
-    public def queryServerTotalData(category, value) {
-        sql.rows("""select c.name as category,s.name as statistic, sum(ps.value) as value 
+    public def queryServerTotalData(queries) {
+        def stmt= """select c.name as category,s.name as statistic, sum(ps.value) as value 
                 from player_statistic ps 
                 inner join statistic s on s.id=ps.statistic_id 
                 inner join category c on c.id=s.category_id 
                 inner join player_session ps2 on ps2.id=ps.player_session_id 
-                inner join match m on m.id=ps2.match_id 
-                inner join map m2 on m2.id=m.map_id 
-                where m2.name=$value 
-                group by c.name,s.name""")
+                inner join match m on m.id=ps2.match_id """
+        def whereConditions= []
+        def joinSetting= false
+        def psValues= []
+        queries.each {key, values ->
+            def criteria= []
+            def ignore= false
+            switch(key) {
+                case "server":
+                    values.tokenize(",").each {
+                        def split= it.split(":")
+                        criteria << "(s2.address=? and s2.port=?)"
+                        psValues << split[0] << split[1].toInteger()
+                    }
+                    stmt+= "inner join server s2 on s2.id=m.server_id "
+                    break
+                case "length":
+                case "difficulty":
+                    values.tokenize(",").each {
+                        criteria << "s3.$key=?"
+                        psValues << it
+                    }
+                    joinSetting= true
+                    break
+                case "map":
+                    values.tokenize(",").each {
+                        criteria << "m2.name=?"
+                        psValues << it
+                    }
+                    stmt+= "inner join map m2 on m2.id=m.map_id "
+                    break
+                default:
+                    ignore= true
+            }
+            if (!ignore) {
+                whereConditions << "(${criteria.join(' or ')})"
+            }
+        }
+        if (joinSetting) {
+            stmt+= "inner join setting s3 on s3.id=m.setting_id "
+        }
+        if (!whereConditions.isEmpty()) {
+            stmt+= "where ${whereConditions.join(' and ')} "
+        }
+        stmt+= "group by c.name,s.name"
+        sql.rows(stmt, psValues)
     }
 }

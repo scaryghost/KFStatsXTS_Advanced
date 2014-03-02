@@ -12,27 +12,29 @@ $(document).ready(function() {
             $('#menu1 > li > p.expanded').addClass('collapsed').removeClass('expanded').parent().find('> ul').slideUp('medium');
         });
     }, 250);
+    updateFilter(null, null);
 });
 
 var filters= {};
 function updateFilter(category, value) {
-    if (value == "") {
-        document.getElementById("txtHint").innerHTML="";
-        return;
-    }
     var xmlhttp;
     if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
         xmlhttp=new XMLHttpRequest();
     } else {// code for IE6, IE5
         xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
     }
-    if (!(category in filters)) {
-        filters[category]= {};
-    }
-    if (value in filters[category]) {
-        delete filters[category][value];
-    } else {
-        filters[category][value]= 1;
+    if (category != null && value != null) {
+        if (!(category in filters)) {
+            filters[category]= {};
+        }
+        if (value in filters[category]) {
+            delete filters[category][value];
+            if(Object.keys(filters[category]).length == 0) {
+                delete filters[category];
+            }
+        } else {
+            filters[category][value]= 1;
+        }
     }
     var queries= [];
     for(var catIt in filters) {
@@ -47,6 +49,10 @@ function updateFilter(category, value) {
             document.getElementById("content").innerHTML=xmlhttp.responseText;
         }
     }
-    xmlhttp.open("POST","IndexContent.html?" + queries.join("&"),true);
+    if (queries.length == 0) {
+        xmlhttp.open("POST","IndexContent.html", true);
+    } else {
+        xmlhttp.open("POST","IndexContent.html?" + queries.join("&"), true);
+    }
     xmlhttp.send();
 }
