@@ -7,4 +7,5 @@
     <page name="player.html" script="Player.groovy" />
     <page name="data.json" script="Data.groovy" />
     <page name="wave.html" script="Wave.groovy" />
+    <page name="summary.html" script="Summary.groovy" />
 </webpages>

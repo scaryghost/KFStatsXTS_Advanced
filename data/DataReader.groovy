@@ -204,4 +204,30 @@ public class DataReader {
         stmt+= "group by c.name,s.name"
         sql.rows(stmt, psValues)
     }
+    @Query(name="server_map_stats")
+    public def queryServerMapStats() {
+        sql.rows("""select m2.name,sum(case when m.result=1 then 1 else 0 end) as wins,
+                sum(case when m.result=-1 then 1 else 0 end) as losses, 
+                sum(case when m.result=0 then 1 else 0 end) as incomplete 
+                from match m inner join map m2 on m2.id=m.map_id group by m2.name""")
+    }
+    @Query(name="server_setting_stats")
+    public def queryServerSettingStats() {
+        sql.rows("""select s.difficulty,s.length,sum(m.wave)/count(*)::float as avg_wave,
+                sum(case when m.result=1 then 1 else 0 end) as wins,
+                sum(case when m.result=-1 then 1 else 0 end) as losses, 
+                sum(case when m.result=0 then 1 else 0 end) as incomplete 
+                from match m inner join setting s on s.id=m.setting_id 
+                group by s.difficulty,s.length;""")
+    }
+    @Query(name="server_totals")
+    public def queryServerTotals() {
+        def matchInfo= sql.firstRow("select count(*), sum(duration) from match")
+        [['players', sql.firstRow("select count(*) from player")[0]], 
+            ['player_time', sql.firstRow("select sum(duration) from player_session")[0]], 
+            ['servers', sql.firstRow("select count(*) from server")[0]], ['matches', matchInfo[0]], 
+            ['match_time', matchInfo[1]]].collect {key, value ->
+            [stat: key, value: value]
+        }
+    }
 }
