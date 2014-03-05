@@ -1,50 +1,41 @@
 public class Index extends WebPage {
     public Index() {
-        pageTitle= "KFStatsX Home"
-        cssSrcs << 'css/heatmap.css' << 'css/menu.css'
-        jsSrcs << 'js/heatmap.js' << 'js/menu.js'
+        pageTitle= "KFStatsX"
+        cssSrcs << 'css/heatmap.css'
+        jsSrcs << 'js/heatmap.js'
     }
     protected void fillBody(builder) {
-        def data= reader.executeQuery("server_total_data")
-
-        builder.div(style: "float: left;", id:'example1') {
-            h4() {
-                mkp.yieldUnescaped 'Filters'
-                a(class:'expand_all') {
-                    img(src:'images/expand.gif', alt: '')
+        builder.div(style: 'width: 650px;margin-left: auto;margin-right: auto;') {
+            ul(class:'nav-list') {
+                li(class:'nav-list') {
+                    a(href: 'serverstats.html', 'Stats')
                 }
-                a(class:'collapse_all') {
-                    img(src:'images/collapse.gif', alt:'')
-                }
+                li(class:'nav-list', "servers")
+                li(class:'nav-list', "players")
+                li(class:'nav-list', "matches")
             }
-            form() {
-            def inputId= -1
-            ul(id:'menu1', class:'example_menu') {
-                [['Server', 'server_list', 'address_port'], ['Difficulty', 'server_difficulties', 'difficulty'], 
-                        ['Length', 'server_lengths', 'length'], ['Map', 'server_maps', 'name']].each{ header, queryName, colName ->
-                    li() {
-                        p(class:'expanded', header)
-                        ul() {
-                            reader.executeQuery(queryName).each {row ->
-                                li() {
-                                    p() {
-                                        input(type:"checkbox", name:header.toLowerCase(), value:row[colName], 
-                                                onchange:"updateFilter(this.name, this.value)", 
-                                                style: 'margin-right:5px;', id: "input_${++inputId}")
-                                        label(for:"input_$inputId", row[colName])
-                                    }
-                                }
+        }
+        ["server_totals", "server_setting_stats", "server_map_stats"].each {query ->
+            builder.table(cellpadding:"0", cellspacing:"0", border:"0", 
+                    class:"heat-map") {
+                def rows= reader.executeQuery(query)
+                builder.thead() {
+                    builder.tr() {
+                        rows[0].keySet().each {
+                            builder.th(it)
+                        }
+                    }
+                }
+                tbody() {
+                    rows.each {result ->
+                        tr(class: 'stats-row') {
+                            result.each {stat, value ->
+                                td(value)
                             }
                         }
                     }
-                    li(class: 'footer') {
-                        span(' ')
-                    }
                 }
             }
-            }
         }
-        builder.div(id: 'content', '')
     }
-
 }

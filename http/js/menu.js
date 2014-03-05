@@ -50,9 +50,9 @@ function updateFilter(category, value) {
         }
     }
     if (queries.length == 0) {
-        xmlhttp.open("POST","IndexContent.html", true);
+        xmlhttp.open("POST","serverstatsdata.html", true);
     } else {
-        xmlhttp.open("POST","IndexContent.html?" + queries.join("&"), true);
+        xmlhttp.open("POST","serverstatsdata.html?" + queries.join("&"), true);
     }
     xmlhttp.send();
 }

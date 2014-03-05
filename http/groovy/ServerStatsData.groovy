@@ -1,7 +1,7 @@
 import com.github.etsai.kfsxtrackingserver.web.Resource
 import groovy.xml.MarkupBuilder
 
-public class WebPage extends Resource {
+public class ServerStatsData extends Resource {
     public String generatePage() {
         def data= reader.executeQuery("server_filtered_total_data", queries)
         def writer= new StringWriter()
