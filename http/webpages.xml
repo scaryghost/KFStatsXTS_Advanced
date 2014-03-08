@@ -8,4 +8,6 @@
     <page name="player.html" script="Player.groovy" />
     <page name="data.json" script="Data.groovy" />
     <page name="wave.html" script="Wave.groovy" />
+    <page name="playerlist.html" script="PlayerList.groovy" />
+    <page name="playerlistdata.json" script="PlayerListData.groovy" />
 </webpages>

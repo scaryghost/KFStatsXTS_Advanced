@@ -1,4 +1,5 @@
 import com.github.etsai.kfsxtrackingserver.annotations.Query
+import com.github.etsai.kfsxtrackingserver.DefaultReader.Order
 import groovy.json.JsonBuilder
 import groovy.sql.Sql
 import java.sql.Connection
@@ -255,5 +256,21 @@ public class DataReader {
             ['match_time', matchInfo[1]]].collect {key, value ->
             [stat: key, value: value]
         }
+    }
+    @Query(name="server_player_list")
+    public def queryServerPlayerList(group, order, start, pageSize) {
+        def orderStr= (group != null && order != Order.NONE) ? "order by $group $order " : ""
+        def limitStr= (start != null & pageSize != null) ? "limit $pageSize offset $start" : ""
+        sql.rows("""select p.id, p.name, sum(case when ps.disconnected=false and m.result=1 then 1 else 0 end) as wins, 
+                sum(case when ps.disconnected=false and m.result=-1 then 1 else 0 end) as losses, 
+                sum(case when ps.disconnected=true then 1 else 0 end) as disconnects, 
+                sum(ps.duration) as time_played from player p 
+                inner join player_session ps on ps.player_id=p.id 
+                inner join match m on m.id=ps.match_id 
+                group by p.id, p.name """ + orderStr + limitStr)
+    }
+    @Query(name="server_player_count")
+    public def queryServerPlayerCount() {
+        sql.firstRow("select count(*) from player")[0]
     }
 }

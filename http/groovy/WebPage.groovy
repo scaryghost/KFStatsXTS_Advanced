@@ -3,7 +3,7 @@ import groovy.xml.MarkupBuilder
 
 public abstract class WebPage extends Resource {
     protected def pageTitle, jsSrcs= ['//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'],
-            cssSrcs= []
+            cssSrcs= [], embeddedJs= []
 
     protected abstract void fillBody(builder)
 
@@ -18,15 +18,20 @@ public abstract class WebPage extends Resource {
                 jsSrcs.each {
                     script(type:'text/javascript', src:it, '')
                 }
+                embeddedJs.each {js ->
+                    script(type:'text/javascript') {
+                        mkp.yieldUnescaped js
+                    }
+                }
                 cssSrcs.each {
                     link(rel:"stylesheet", type:"text/css", href:it)
                 }
             }
-            htmlBuilder.body() {
+            body() {
                 fillBody(htmlBuilder)
             }
         }
 
-        return String.format("<!DOCTYPE HTML>%s%n", writer)
+        return String.format("<!DOCTYPE HTML>%n%s", writer)
     }
 }
