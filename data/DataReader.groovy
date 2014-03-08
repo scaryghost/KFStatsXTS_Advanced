@@ -220,6 +220,32 @@ public class DataReader {
                 from match m inner join setting s on s.id=m.setting_id 
                 group by s.difficulty,s.length;""")
     }
+    @Query(name="server_list_2")
+    public def queryServerList2() {
+        sql.rows("""select concat(s.address,':',s.port) as address, count(*) as games, 
+                max(m.time_end) as last_active from server s 
+                inner join match m on m.server_id=s.id 
+                group by s.address,s.port 
+                order by last_active DESC;""")
+    }
+    @Query(name="server_status")
+    public def queryServerStatus() {
+        sql.rows("""select concat(s.address,':',s.port),
+                case when m1.result is null then 
+                    (select ws1.wave + 1 as wave from wave_summary ws1 
+                    left outer join wave_summary ws2 on (ws1.match_id=ws2.match_id and ws1.wave < ws2.wave) 
+                    where ws2.id is null and ws1.match_id=m1.id) 
+                else null end as wave,
+                case when m1.result is null then 
+                    m3.name 
+                else null end as map, 
+                case when m1.result is null then 'ACTIVE' else 'INACTIVE' end as status from match m1 
+                inner join map m3 on m3.id=m1.map_id 
+                inner join server s on s.id=m1.server_id 
+                left outer join match m on (m.server_id=m1.server_id and 
+                    (m.result is null and m1.result is not null or m.time_end > m1.time_end)) 
+                where m.id is null;""")
+    }
     @Query(name="server_totals")
     public def queryServerTotals() {
         def matchInfo= sql.firstRow("select count(*), sum(duration) from match")

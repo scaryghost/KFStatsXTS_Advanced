@@ -15,7 +15,7 @@ public class Index extends WebPage {
                 li(class:'nav-list', "matches")
             }
         }
-        ["server_totals", "server_setting_stats", "server_map_stats"].each {query ->
+        ["server_totals", "server_setting_stats", "server_map_stats", "server_list_2"].each {query ->
             builder.table(cellpadding:"0", cellspacing:"0", border:"0", 
                     class:"heat-map") {
                 def rows= reader.executeQuery(query)
