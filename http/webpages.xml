@@ -10,4 +10,6 @@
     <page name="wave.html" script="Wave.groovy" />
     <page name="playerlist.html" script="PlayerList.groovy" />
     <page name="playerlistdata.json" script="PlayerListData.groovy" />
+    <page name="matchlist.html" script="MatchList.groovy" />
+    <page name="matchlistdata.json" script="MatchListData.groovy" />
 </webpages>

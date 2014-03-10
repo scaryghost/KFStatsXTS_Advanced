@@ -273,4 +273,21 @@ public class DataReader {
     public def queryServerPlayerCount() {
         sql.firstRow("select count(*) from player")[0]
     }
+    @Query(name="server_match_list")
+    public def queryMatchList(group, order, start, pageSize) {
+        def orderStr= (group != null && order != Order.NONE) ? "order by $group $order " : ""
+        def limitStr= (start != null & pageSize != null) ? "limit $pageSize offset $start" : ""
+
+        sql.rows("""select m1.id, concat(s1.address,':',s1.port) as address_port, 
+                s2.difficulty, s2.length, m2.name as map, m1.wave, m1.result, 
+                (m1.time_end - (m1.duration * '1 seconds'::interval)) as time_begin, 
+                m1.time_end from match m1 
+                inner join map m2 on m2.id=m1.map_id 
+                inner join server s1 on s1.id=m1.server_id 
+                inner join setting s2 on s2.id=m1.setting_id;""")
+    }
+    @Query(name="server_match_count")
+    public def queryMatchCount() {
+        sql.firstRow("select count(*) from match")[0]
+    }
 }
