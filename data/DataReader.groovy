@@ -284,7 +284,7 @@ public class DataReader {
                 m1.time_end from match m1 
                 inner join map m2 on m2.id=m1.map_id 
                 inner join server s1 on s1.id=m1.server_id 
-                inner join setting s2 on s2.id=m1.setting_id;""")
+                inner join setting s2 on s2.id=m1.setting_id """ + orderStr + limitStr)
     }
     @Query(name="server_match_count")
     public def queryMatchCount() {

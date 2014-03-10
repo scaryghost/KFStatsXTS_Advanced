@@ -23,7 +23,7 @@ public class MatchList extends WebPage {
                 aaSorting: [],
                 aoColumnDefs: [
                     { "sTitle": "Address", "sName": "address_port", "aTargets": [ 0 ] },
-                    { "sTitle": "Difficulty", "sName": "dfficulty", "aTargets": [ 1 ] },
+                    { "sTitle": "Difficulty", "sName": "difficulty", "aTargets": [ 1 ] },
                     { "sTitle": "Length", "sName": "length", "aTargets": [ 2 ] },
                     { "sTitle": "Map", "sName": "map", "aTargets": [ 3 ] },
                     { "sTitle": "Wave", "sName": "wave", "aTargets": [ 4 ] },
