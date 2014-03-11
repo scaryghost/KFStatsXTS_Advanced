@@ -290,4 +290,9 @@ public class DataReader {
     public def queryMatchCount() {
         sql.firstRow("select count(*) from match")[0]
     }
+    @Query(name="server_match_daily")
+    public def queryServerMatchDaily() {
+        sql.rows("""select count(*) as count, extract(epoch from time_end::date) * 1000 as date_end from match m 
+                where m.time_end is not null group by date_end;""")
+    }
 }
