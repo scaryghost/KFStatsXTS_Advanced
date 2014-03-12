@@ -12,4 +12,7 @@
     <page name="playerlistdata.json" script="PlayerListData.groovy" />
     <page name="matchlist.html" script="MatchList.groovy" />
     <page name="matchlistdata.json" script="MatchListData.groovy" />
+    <page name="serverlist.html" script="ServerList.groovy" />
+    <page name="maplist.html" script="MapList.groovy" />
+    <page name="settinglist.html" script="SettingList.groovy" />
 </webpages>

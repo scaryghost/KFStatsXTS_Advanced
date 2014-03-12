@@ -10,12 +10,21 @@ public class Index extends WebPage {
                 li(class:'nav-list') {
                     a(href: 'serverstats.html', 'Stats')
                 }
-                li(class:'nav-list', "servers")
-                li(class:'nav-list', "players")
-                li(class:'nav-list', "matches")
+                li(class:'nav-list') {
+                    a(href: 'serverlist.html', 'Servers')
+                }
+                li(class:'nav-list') {
+                    a(href: 'maplist.html', 'Maps')
+                }
+                li(class:'nav-list') {
+                    a(href: 'settinglist.html', 'Setting')
+                }
+                li(class:'nav-list') {
+                    a(href: 'playerlist.html', 'Players')
+                }
             }
         }
-        ["server_totals", "server_setting_stats", "server_map_stats", "server_list_2"].each {query ->
+        ["server_totals"].each {query ->
             builder.table(cellpadding:"0", cellspacing:"0", border:"0", 
                     class:"heat-map") {
                 def rows= reader.executeQuery(query)
