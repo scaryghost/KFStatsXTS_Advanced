@@ -26,8 +26,36 @@ public abstract class WebPage extends Resource {
                 cssSrcs.each {
                     link(rel:"stylesheet", type:"text/css", href:it)
                 }
+                style() {
+                    mkp.yieldUnescaped """
+    .nav-list {
+        padding-left: 5px;
+        display: inline;
+        margin-right: 20px;
+    }
+"""
+                }
             }
             body() {
+                div(style: 'width: 650px;margin-left: auto;margin-right: auto;') {
+                    ul(class:'nav-list') {
+                        li(class:'nav-list') {
+                            a(href: 'serverstats.html', 'Stats')
+                        }
+                        li(class:'nav-list') {
+                            a(href: 'serverlist.html', 'Servers')
+                        }
+                        li(class:'nav-list') {
+                            a(href: 'maplist.html', 'Maps')
+                        }
+                        li(class:'nav-list') {
+                            a(href: 'settinglist.html', 'Setting')
+                        }
+                        li(class:'nav-list') {
+                            a(href: 'playerlist.html', 'Players')
+                        }
+                    }
+                }
                 fillBody(htmlBuilder)
             }
         }
