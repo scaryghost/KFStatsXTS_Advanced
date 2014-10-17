@@ -70,7 +70,7 @@ CREATE TABLE statistic (
 CREATE TABLE server (
   id       INTEGER NOT NULL PRIMARY KEY, 
   address varchar(15) NOT NULL, 
-  port    integer;
+  port    integer);
 CREATE TABLE wave_summary (
   id        INTEGER NOT NULL PRIMARY KEY, 
   match_id varchar NOT NULL, 
