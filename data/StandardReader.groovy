@@ -3,14 +3,13 @@ import com.github.etsai.kfsxtrackingserver.DefaultReader
 import groovy.sql.Sql
 import java.sql.Connection
 
-public class TSAdvancedReader {
+public class tandardReader {
     private final def sql
 
-    public TSAdvancedReader(Connection conn) {
+    public StandardReader(Connection conn) {
         this.sql= new Sql(conn)
     }
 
-/*
     private void resultAggregator(accum, row) {
         def rowResult= row.toRowResult()
         def result= rowResult.result
@@ -33,6 +32,7 @@ public class TSAdvancedReader {
                 throw new Exception("Unrecognized result value: $result")
        }
     }
+    @Query(name="server_difficulties")
     public Collection<Difficulty> getDifficulties() {
         def diffStats= [:]
 
@@ -43,6 +43,7 @@ public class TSAdvancedReader {
         }
         diffStats.values().collect{ new Difficulty(it) }
     }
+    @Query(name="server_levels")
     public Collection<Level> getLevels() {
         def levelStats= [:]
 
@@ -52,6 +53,7 @@ public class TSAdvancedReader {
         }
         levelStats.values().collect{ new Level(it) }
     }
+    @Query(name="server_record")
     public PlayerRecord getRecord(String steamID64) {
         def prValues= [disconnects: sql.firstRow("select count(*) from player_session where player_id=? and disconnected=true", [steamID64])[0], 
                 finales_played: 0, finales_survived: 0, time: 0, wins: 0, losses: 0, steamid64: steamID64]
@@ -75,6 +77,7 @@ public class TSAdvancedReader {
         }
         return new PlayerRecord(prValues)
     }
+    @Query(name="server_records")
     public Collection<PlayerRecord> getRecords(String group, Order order, int start, int end) {
         def orderStr= (group != null && order != Order.NONE) ? "order by $group $order" : ""
 
@@ -109,9 +112,11 @@ public class TSAdvancedReader {
         }
         prValues.values().collect{ new PlayerRecord(it) }
     }
+    @Query(name="server_num_record")
     public Integer getNumRecords() {
         return sql.firstRow('select count(*) from player')[0]
     }
+    @Query(name="server_all_records")
     public Collection<PlayerRecord> getRecords() {
         def prValues= [:]
         sql.eachRow('''select player_id,result,count(m.result) from player_session ps inner join match m 
@@ -141,6 +146,7 @@ public class TSAdvancedReader {
             }
         }
     }
+    @Query(name="player_history")
     public Collection<Match> getMatchHistory(String steamID64, String group, Order order, int start, int end) {
         def orderStr= (group != null && order != Order.NONE) ? "order by $group $order" : ""
 
@@ -159,6 +165,7 @@ public class TSAdvancedReader {
         return matches
 
     }
+    @Query(name="player_all_histories")
     public Collection<Match> getMatchHistory(String steamID64) {
         def matches= []
         ///< TODO: match history result needs to be win,loss,or disconnect
@@ -175,10 +182,12 @@ public class TSAdvancedReader {
         }
         return matches
     }
+    @Query(name="player_num_matches")
     public Integer getNumMatches(String steamID64) {
         return sql.firstRow("""select count(*) from player_session ps inner join match m on m.id=ps.match_id 
                 where player_id=$steamID64""")[0]
     }
+    @Query(name="server_categories")
     public Collection<String> getStatCategories() {
         def categories= []
 
@@ -188,6 +197,7 @@ public class TSAdvancedReader {
         }
         return categories
     }
+    @Query(name="server_aggregate_data")
     public Collection<Stat> getAggregateData(String category) {
         def stats= []
 
@@ -197,6 +207,7 @@ public class TSAdvancedReader {
         }
         return stats
     }
+    @Query(name="player_aggregate_data")
     public Collection<Stat> getAggregateData(String category, String steamID64) {
         def stats= []
 
@@ -207,10 +218,12 @@ public class TSAdvancedReader {
         }
         return stats
     }
+    @Query(name="player_info")
     public SteamIDInfo getSteamIDInfo(String steamID64) {
         def info= sql.firstRow("select name,avatar from player where id=$steamID64")
         return new SteamIDInfo(info)
     }
+    @Query(name="server_wave_data")
     public Collection<WaveStat> getWaveData(String difficulty, String length, String category) {
         def waveStats= []
 
@@ -223,6 +236,7 @@ public class TSAdvancedReader {
         }
         return waveStats
     }
+    @Query(name="server_level_wave_data")
     public Collection<WaveStat> getWaveData(String level, String difficulty, String length, String category) {
         def waveStats= []
 
@@ -236,7 +250,7 @@ public class TSAdvancedReader {
         }
         return waveStats
     }
-
+    @Query(name="server_wave_categories")
     public Collection<String> getWaveDataCategories() {
         def categories= []
 
@@ -246,6 +260,7 @@ public class TSAdvancedReader {
         }
         return categories
     }
+    @Query(name="server_level_data")
     public Collection<LevelDifficulty> getLevelData(String level) {
         def levelData= [:]
 
@@ -256,6 +271,7 @@ public class TSAdvancedReader {
         }
         levelData.values().collect{ new LevelDifficulty(it) }
     }
+    @Query(name="server_difficulty_data")
     public Collection<LevelDifficulty> getDifficultyData(String difficulty, String length) {
         def diffData= [:]
         sql.eachRow("""select m2.name as level,sum(m.wave) as wave_sum,count(m.result) as result_count,sum(m.duration) as time,m.result from match m 
@@ -265,8 +281,4 @@ public class TSAdvancedReader {
         }
         diffData.values().collect{ new LevelDifficulty(it) }
     }
-    public Object getData(String queryName, List<Object> parameters) {
-        throw new UnsupportedOperationException("Not yet implemented")
-    }
-*/
 }

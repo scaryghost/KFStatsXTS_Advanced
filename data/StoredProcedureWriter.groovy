@@ -1,7 +1,7 @@
 import java.sql.Connection
 import groovy.sql.Sql
 
-public class StoredProcedureWriter extends TSAdvancedWriter {
+public class StoredProcedureWriter extends AdvancedWriter {
     public StoredProcedureWriter(Connection conn) {
         super(conn)
     }

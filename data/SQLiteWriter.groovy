@@ -1,6 +1,6 @@
 import java.sql.Connection
 
-public class SQLiteWriter extends TSAdvancedWriter {
+public class SQLiteWriter extends AdvancedWriter {
     public SQLiteWriter(Connection conn) {
         super(conn)
     }

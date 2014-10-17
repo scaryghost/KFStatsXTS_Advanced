@@ -12,8 +12,8 @@ import java.text.SimpleDateFormat
 import java.util.TimeZone
 import java.util.UUID;
 
-public abstract class TSAdvancedWriter implements DataWriter {
-    protected final static def resultValues= [(Result.WIN): 1, (Result.LOSS): -1, (Result.INCOMPLETE): 0]
+public abstract class AdvancedWriter implements DataWriter {
+    protected final static def resultValues= [(Result.WIN): 1, (Result.LOSS): -1, (Result.MID_GAME_VOTE): 0]
     protected final def matchStates, dateFormat, sql, perksCategory= "perks"
 
     protected static class State {
@@ -21,7 +21,7 @@ public abstract class TSAdvancedWriter implements DataWriter {
                 createdMatchEntry, lastWave
     }
 
-    public TSAdvancedWriter(Connection conn) {
+    public AdvancedWriter(Connection conn) {
         this.sql= new Sql(conn)
         matchStates= [:]
         dateFormat= new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
@@ -123,6 +123,8 @@ public abstract class TSAdvancedWriter implements DataWriter {
             insertPlayerStatistic(content.getPackets(), content.getSteamID64(), state.uuid, time)
         }
     }
+
+    public void refactor(String group, String info) { }
 
     protected void insertWaveSummaryPerk(uuid, wave, stat, count) {
         sql.execute("""insert into wave_summary_perk(wave_summary_id, perk_id, count) values (

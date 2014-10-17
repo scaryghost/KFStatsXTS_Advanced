@@ -4,7 +4,7 @@ import groovy.json.JsonBuilder
 import groovy.sql.Sql
 import java.sql.Connection
 
-public class DataReader {
+public class AdvancedReader {
     private final def sql
 
     public DataReader(Connection conn) {
