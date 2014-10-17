@@ -7,7 +7,7 @@ import java.sql.Connection
 public class AdvancedReader {
     private final def sql
 
-    public DataReader(Connection conn) {
+    public AdvancedReader(Connection conn) {
         this.sql= new Sql(conn)
     }
 
