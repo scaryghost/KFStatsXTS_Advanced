@@ -8,7 +8,7 @@ public class SQLiteWriter extends AdvancedWriter {
     protected void upsertPlayer(info) {
         sql.execute("insert or ignore into player(id) values (${info.steamID64})")
         sql.execute("update player set name=?,avatar=? where id=?", 
-                [info.steamID64, info.name, info.avatar])
+                [info.name, info.avatar, info.steamID64])
     }
     protected void insertWaveSummaryPerk(uuid, wave, stat, count) {
         super.insertWaveSummaryPerk(uuid.toString(), wave, stat, count)

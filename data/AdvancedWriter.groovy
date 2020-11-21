@@ -38,7 +38,7 @@ public abstract class AdvancedWriter implements DataWriter {
     public void writeSteamInfo(Collection<SteamInfo> steamInfo) {
         sql.withTransaction {
             steamInfo.each {info ->
-                upsertPlayer(steamInfo)
+                upsertPlayer(info)
             }
         }
     }
