@@ -1,3 +1,4 @@
+import groovy.sql.Sql
 import java.sql.Connection
 
 public class SQLiteWriter extends AdvancedWriter {

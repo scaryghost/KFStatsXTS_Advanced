@@ -37,7 +37,7 @@ public class AdvancedReader {
     @Query(name="server_match")
     public def queryMatch(matchUUID) {
         return sql.firstRow("""select (select count(*) from player_session ps where ps.match_id=m.id) as player_count,
-                concat(s2.address,':',s2.port) as server,concat(s.difficulty,', ',s.length) as setting,
+                s2.address||':'||s2.port as server,s.difficulty||', '||s.length as setting,
                 m2.name as map,m.wave,m.result,m.time_end,m.duration from match m 
                 inner join setting s on s.id=m.setting_id 
                 inner join map m2 on m2.id=m.map_id 
@@ -137,7 +137,7 @@ public class AdvancedReader {
     }
     @Query(name="server_list")
     public def queryServerList() {
-        sql.rows("select concat(s.address, ':', s.port) as address_port from server s")
+        sql.rows("select s.address||':'||s.port as address_port from server s")
     }
     @Query(name="server_difficulties")
     public def queryServerDifficulties() {
@@ -214,7 +214,7 @@ public class AdvancedReader {
     }
     @Query(name="server_setting_stats")
     public def queryServerSettingStats() {
-        sql.rows("""select s.difficulty,s.length,sum(m.wave)/count(*)::float as avg_wave,
+        sql.rows("""select s.difficulty,s.length,sum(m.wave)/cast(count(*) AS real) as avg_wave,
                 sum(case when m.result=1 then 1 else 0 end) as wins,
                 sum(case when m.result=-1 then 1 else 0 end) as losses, 
                 sum(case when m.result=0 then 1 else 0 end) as incomplete 
@@ -223,7 +223,7 @@ public class AdvancedReader {
     }
     @Query(name="server_list_2")
     public def queryServerList2() {
-        sql.rows("""select concat(s.address,':',s.port) as address, count(*) as games, 
+        sql.rows("""select s.address||':'||s.port as address, count(*) as games, 
                 max(m.time_end) as last_active from server s 
                 inner join match m on m.server_id=s.id 
                 group by s.address,s.port 
@@ -231,7 +231,7 @@ public class AdvancedReader {
     }
     @Query(name="server_status")
     public def queryServerStatus() {
-        sql.rows("""select concat(s.address,':',s.port),
+        sql.rows("""select s.address||':'||s.port,
                 case when m1.result is null then 
                     (select ws1.wave + 1 as wave from wave_summary ws1 
                     left outer join wave_summary ws2 on (ws1.match_id=ws2.match_id and ws1.wave < ws2.wave) 
@@ -278,7 +278,7 @@ public class AdvancedReader {
         def orderStr= (group != null && order != Order.NONE) ? "order by $group $order " : ""
         def limitStr= (start != null & pageSize != null) ? "limit $pageSize offset $start" : ""
 
-        sql.rows("""select m1.id, concat(s1.address,':',s1.port) as address_port, 
+        sql.rows("""select m1.id, s1.address||':'||s1.port as address_port, 
                 s2.difficulty, s2.length, m2.name as map, m1.wave, m1.result, 
                 (m1.time_end - (m1.duration * '1 seconds'::interval)) as time_begin, 
                 m1.time_end from match m1 
