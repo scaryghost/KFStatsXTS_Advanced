@@ -1,10 +1,10 @@
-import com.github.etsai.kfsxtrackingserver.DataWriter
-import com.github.etsai.kfsxtrackingserver.DataWriter.SteamInfo
-import com.github.etsai.kfsxtrackingserver.PacketParser.StatPacket
-import com.github.etsai.kfsxtrackingserver.PacketParser.MatchPacket
-import com.github.etsai.kfsxtrackingserver.PacketParser.PlayerPacket
-import com.github.etsai.kfsxtrackingserver.PacketParser.Result
-import com.github.etsai.kfsxtrackingserver.PlayerContent
+import scaryghost.kfsxtrackingserver.DataWriter
+import scaryghost.kfsxtrackingserver.DataWriter.SteamInfo
+import scaryghost.kfsxtrackingserver.PacketParser.StatPacket
+import scaryghost.kfsxtrackingserver.PacketParser.MatchPacket
+import scaryghost.kfsxtrackingserver.PacketParser.PlayerPacket
+import scaryghost.kfsxtrackingserver.PacketParser.Result
+import scaryghost.kfsxtrackingserver.PlayerContent
 import groovy.sql.Sql
 import java.sql.Connection
 import java.sql.BatchUpdateException

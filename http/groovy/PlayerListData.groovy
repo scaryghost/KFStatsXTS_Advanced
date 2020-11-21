@@ -1,5 +1,5 @@
-import com.github.etsai.kfsxtrackingserver.DefaultReader.Order
-import com.github.etsai.kfsxtrackingserver.web.Resource
+import scaryghost.kfsxtrackingserver.DefaultReader.Order
+import scaryghost.kfsxtrackingserver.web.Resource
 import groovy.json.JsonBuilder
 
 public class PlayerListData extends Resource {

@@ -1,5 +1,5 @@
-import com.github.etsai.kfsxtrackingserver.annotations.Query
-import com.github.etsai.kfsxtrackingserver.DefaultReader.Order
+import scaryghost.kfsxtrackingserver.annotations.Query
+import scaryghost.kfsxtrackingserver.DefaultReader.Order
 import groovy.json.JsonBuilder
 import groovy.sql.Sql
 import java.sql.Connection

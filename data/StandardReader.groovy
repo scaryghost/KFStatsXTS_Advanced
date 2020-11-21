@@ -1,5 +1,5 @@
-import static com.github.etsai.kfsxtrackingserver.DefaultReader.*
-import com.github.etsai.kfsxtrackingserver.DefaultReader
+import static scaryghost.kfsxtrackingserver.DefaultReader.*
+import scaryghost.kfsxtrackingserver.DefaultReader
 import groovy.sql.Sql
 import java.sql.Connection
 

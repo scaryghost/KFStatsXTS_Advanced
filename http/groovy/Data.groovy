@@ -1,4 +1,4 @@
-import com.github.etsai.kfsxtrackingserver.web.Resource
+import scaryghost.kfsxtrackingserver.web.Resource
 import groovy.json.JsonBuilder
 import java.util.UUID
 
